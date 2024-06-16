@@ -12,6 +12,9 @@ LINK = $(WDC)\Tools\bin\WDCLN.exe
 INCLUDEDIR = $(WDC)\Tools\include
 LIBDIR = $(WDC)\Tools\lib\cl.lib
 
+# Compiler flags. Moved to a variable to allow quick and easy changes, as this may require experimentation, and some features are deprecated.
+# These compiler flags target the large memory model, with "general-purpose" optimizations, and specific warning settings. These flags are directly equivalent to what ID originally used to compile.
+COMPFLAGS = -ML -SO -WA -WR -WU
 
 #--------------------------------------------------------------------
 # WOLF.HEX
@@ -86,69 +89,69 @@ rsprite.obj:	snes.equ idmacros.asm rsprite.asm
 #--------------------------------------------------------------------
 
 tables.obj:	wolfdef.h sprites.h tables.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) tables.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) tables.c
 
 sounds.obj: sounds.c
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) sounds.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) sounds.c
 
 wolfio.obj:	refresh.h sneswolf.h wolfdef.h sprites.h version.h extdata.h noahmisc.h iosnes.h wolfio.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) wolfio.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) wolfio.c
 
 snesmain.obj:	refresh.h sneswolf.h wolfdef.h sprites.h version.h extdata.h noahmisc.h iosnes.h snesmain.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) snesmain.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) snesmain.c
 
 intermis.obj:	sneswolf.h wolfdef.h sprites.h version.h extdata.h noahmisc.h iosnes.h intermis.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) intermis.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) intermis.c
 
 music.obj:	refresh.h sneswolf.h wolfdef.h sprites.h version.h extdata.h noahmisc.h iosnes.h music.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) music.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) music.c
 
 intro.obj:	wolfdef.h sprites.h sneswolf.h wolfdef.h sprites.h version.h extdata.h noahmisc.h iosnes.h intro.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) intro.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) intro.c
 
 doors.obj:	wolfdef.h sprites.h doors.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) doors.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) doors.c
 
 enmove.obj:	wolfdef.h sprites.h enmove.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) enmove.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) enmove.c
 
 enthink.obj:	wolfdef.h sprites.h enthink.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) enthink.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) enthink.c
 
 level.obj:	wolfdef.h sprites.h level.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) level.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) level.c
 
 missiles.obj:	wolfdef.h sprites.h missiles.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) missiles.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) missiles.c
 
 plmove.obj:	wolfdef.h sprites.h plmove.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) plmove.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) plmove.c
 
 plstuff.obj:	wolfdef.h sprites.h plstuff.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) plstuff.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) plstuff.c
 
 plthink.obj:	wolfdef.h sprites.h plthink.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) plthink.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) plthink.c
 
 pushwall.obj:	wolfdef.h sprites.h pushwall.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) pushwall.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) pushwall.c
 
 refresh.obj:	refresh.h refresh.c
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) refresh.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) refresh.c
 
 refbsp.obj:	refresh.h refbsp.c
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) refbsp.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) refbsp.c
 
 refspr.obj:	refresh.h sprstruc.c refspr.c
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) refspr.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) refspr.c
 
 sight.obj:	wolfdef.h sprites.h sight.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) sight.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) sight.c
 
 wolfmain.obj:	wolfdef.h sprites.h wolfmain.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) wolfmain.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) wolfmain.c
 
 statedef.obj:	wolfdef.h sprites.h statedef.c sounds.h states.h
-	$(CC) -D__ORCAC__ -ML -SO -WL -I $(INCLUDEDIR) statedef.c
+	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) statedef.c
 
 
