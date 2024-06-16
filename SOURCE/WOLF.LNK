@@ -1,8 +1,8 @@
--O WOLF.HEX
+-O WOLF.BIN
 -T
 -SZ
 -B
--HM28
+-HB
 -E
 
 -CC00000,000000
