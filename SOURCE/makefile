@@ -153,5 +153,3 @@ wolfmain.obj:	wolfdef.h sprites.h wolfmain.c sounds.h states.h
 
 statedef.obj:	wolfdef.h sprites.h statedef.c sounds.h states.h
 	$(CC) -D__ORCAC__ $(COMPFLAGS) -I $(INCLUDEDIR) statedef.c
-
-
