@@ -10,7 +10,7 @@ ASM = $(WDC)\Tools\bin\WDC816AS.exe
 LINK = $(WDC)\Tools\bin\WDCLN.exe
 
 INCLUDEDIR = $(WDC)\Tools\include
-LIBDIR = $(WDC)\Tools\lib\cl.lib
+LIBDIR = $(WDC)\Tools\lib\cl
 
 # Compiler flags. Moved to a variable to allow quick and easy changes, as this may require experimentation, and some features are deprecated.
 # These compiler flags target the large memory model, with "general-purpose" optimizations, and specific warning settings. These flags are directly equivalent to what ID originally used to compile.

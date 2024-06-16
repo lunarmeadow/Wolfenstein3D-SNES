@@ -1,4 +1,4 @@
--O NOAH.HEX
+-O WOLF.HEX
 -T
 -SZ
 -B
@@ -45,4 +45,3 @@ refspr.obj
 sight.obj
 wolfmain.obj
 statedef.obj
-
