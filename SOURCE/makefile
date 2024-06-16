@@ -53,7 +53,7 @@ wolfmain.obj \
 statedef.obj
 
 wolf.hex:	$(WOLF) wolf.lnk
-	$(LINK) -F wolf.lnk -L$(LIBDIR)
+	$(LINK) -F wolf.lnk -Q -L$(LIBDIR)
 
 #--------------------------------------------------------------------
 # ASM FILES
