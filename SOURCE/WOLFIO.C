@@ -154,17 +154,17 @@ void IO_CheckInput (void)
 // DEBUG: check for freeze pause
 //-------------------------------
 
-//shit#if 0
+#if 0
 	if ( (joystick1 & JOYPAD_TL) && (joystick1 & JOYPAD_TR) )
 	{
 		PauseSong ();
 		while ( !(joystick1 & JOYPAD_START) )
-			;
+		;
 		while ( joystick1 & JOYPAD_START )
-			;
+		;
 		UnPauseSong ();
 	}
-//shit#endif
+#endif
 
 //-------------------------------
 // Get control flags from joypad

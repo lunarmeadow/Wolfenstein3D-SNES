@@ -1,10 +1,10 @@
 $org	$c20000
 
 $align	0x10000
-..\gfx\walls\wcolumns.bin	wcolumns
+wcolumns.bin	wcolumns
 
 $align	0x10000
-..\gfx\sprites\sprites.bin	spritedat
+sprites.bin	spritedat
 
 scaleatz.bin			scaleatz
 
@@ -12,83 +12,82 @@ finetan.bin			finetan
 finesin.bin			finesin
 viewtox.bin			viewtox
 xtoview.bin			xtoview
-
-;REMOVED;ballmap.bin			ballmap
-;REMOVED;..\gfx\misc\logos.bin		logos
+ballmap.bin			ballmap
+logos.bin		logos
 
 $align	2	; DMA transfers should be word aligned
 
-..\gfx\misc\titlepal.bin	credpal
-..\gfx\misc\dimpal.bin		dimpal
-..\gfx\misc\title.bin		credit
+titlepal.bin	credpal
+dimpal.bin		dimpal
+title.bin		credit
 
-..\gfx\misc\briefpal.bin	briefpal
-..\gfx\misc\brief.bin		brief
+briefpal.bin	briefpal
+brief.bin		brief
 
-..\gfx\misc\interpal.bin	interpal
-..\gfx\misc\tiles1.bin		intertiles
+interpal.bin	interpal
+tiles1.bin		intertiles
 
-..\gfx\misc\mapicons.bin	mapicons
+mapicons.bin	mapicons
 
-..\gfx\misc\playpal.bin		playpal
-..\gfx\misc\playback.bin	playback
-..\gfx\misc\statspr.bin		statspr
-..\gfx\misc\m7tiles.bin		m7tiles
-..\gfx\misc\psprites.bin	psprites
+playpal.bin		playpal
+playback.bin	playback
+statspr.bin		statspr
+m7tiles.bin		m7tiles
+psprites.bin	psprites
 
-..\gfx\misc\weapon1.bin		weapon1
-..\gfx\misc\weapon2.bin		weapon2
-..\gfx\misc\weapon3.bin		weapon3
-..\gfx\misc\weapon4.bin		weapon4
-..\gfx\misc\weapon5.bin		weapon5
-..\gfx\misc\weapon6.bin		weapon6
+weapon1.bin		weapon1
+weapon2.bin		weapon2
+weapon3.bin		weapon3
+weapon4.bin		weapon4
+weapon5.bin		weapon5
+weapon6.bin		weapon6
 
-..\music\snes01.snm		song_01
-..\music\snes02.snm		song_02
-..\music\snes03.snm		song_03
-..\music\snes04.snm		song_04
-..\music\snes05.snm		song_05
-..\music\snes06.snm		song_06
-..\music\snes07.snm		song_07
-..\music\snes08.snm		song_08
-..\music\snes09.snm		song_09
-..\music\snes10.snm		song_10
-..\music\snes11.snm		song_11
+snes01.snm		song_01
+snes02.snm		song_02
+snes03.snm		song_03
+snes04.snm		song_04
+snes05.snm		song_05
+snes06.snm		song_06
+snes07.snm		song_07
+snes08.snm		song_08
+snes09.snm		song_09
+snes10.snm		song_10
+snes11.snm		song_11
 
-..\maps\bsp\map00.cmp		map0
-..\maps\bsp\map01.cmp		map1
-..\maps\bsp\map02.cmp		map2
-..\maps\bsp\map03.cmp		map3
-..\maps\bsp\map04.cmp		map4
-..\maps\bsp\map05.cmp		map5
-..\maps\bsp\map06.cmp		map6
-..\maps\bsp\map07.cmp		map7
-..\maps\bsp\map08.cmp		map8
-..\maps\bsp\map09.cmp		map9
-..\maps\bsp\map10.cmp		map10
-..\maps\bsp\map11.cmp		map11
-..\maps\bsp\map12.cmp		map12
-..\maps\bsp\map13.cmp		map13
-..\maps\bsp\map14.cmp		map14
-..\maps\bsp\map15.cmp		map15
-..\maps\bsp\map16.cmp		map16
-..\maps\bsp\map17.cmp		map17
-..\maps\bsp\map18.cmp		map18
-..\maps\bsp\map19.cmp		map19
-..\maps\bsp\map20.cmp		map20
-..\maps\bsp\map21.cmp		map21
-..\maps\bsp\map22.cmp		map22
-..\maps\bsp\map23.cmp		map23
-..\maps\bsp\map24.cmp		map24
-..\maps\bsp\map25.cmp		map25
-..\maps\bsp\map26.cmp		map26
-..\maps\bsp\map27.cmp		map27
-..\maps\bsp\map28.cmp		map28
-..\maps\bsp\map29.cmp		map29
-..\maps\bsp\map30.cmp		map30
+map00.cmp		map0
+map01.cmp		map1
+map02.cmp		map2
+map03.cmp		map3
+map04.cmp		map4
+map05.cmp		map5
+map06.cmp		map6
+map07.cmp		map7
+map08.cmp		map8
+map09.cmp		map9
+map10.cmp		map10
+map11.cmp		map11
+map12.cmp		map12
+map13.cmp		map13
+map14.cmp		map14
+map15.cmp		map15
+map16.cmp		map16
+map17.cmp		map17
+map18.cmp		map18
+map19.cmp		map19
+map20.cmp		map20
+map21.cmp		map21
+map22.cmp		map22
+map23.cmp		map23
+map24.cmp		map24
+map25.cmp		map25
+map26.cmp		map26
+map27.cmp		map27
+map28.cmp		map28
+map29.cmp		map29
+map30.cmp		map30
 
-..\sound\sounds.bin		sounds
-..\sound\shsounds.bin		shsounds
+sounds.bin		sounds
+shsounds.bin		shsounds
 
 pad				pad
 

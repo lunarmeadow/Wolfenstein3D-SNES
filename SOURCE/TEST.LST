@@ -1,0 +1,886 @@
+  Sat Oct  1 1994 17:28                                                Page 1
+
+
+                     ***************************************
+                     **   Zardoz 65C816 Macro Assembler   **
+                     **                                   **
+                     **     Version 2.0h - Aug 11 1994    **
+                     ***************************************
+
+     1                        *-------------------------------------------------
+                    -------------------
+     2                        * TEST.ASM
+     3                        *-------------------------------------------------
+                    -------------------
+     4                        
+     5                        ; This is the basic interrupt vectoring code.  It 
+                    is assembled to run
+     6                        ; at bank $C0, but it will be shadowed into the up
+                    per 32k of bank 0.
+     7                        ; The vectors point to a stup routine that execute
+                    s in bank 0 and
+     8                        ; just does a far jump to the real routine in bank
+                     $C0.
+     9                        
+    10                        	spaces	on
+    11                        	llchar	.
+    12                        
+    13                        	include	snes.equ
+    14                        	include idmacros.asm
+    15                        
+    16                        
+    17                        boot	section	;offset	$C0FC00	;Boot code & rel
+                    ated
+    18                        
+    19                        ;-------------------------------------------------
+                    -------------------
+    20                        
+    21                        	extern	~~joystick1
+    22                        	extern	~~mouse1
+    23                        	extern	~~mouse2
+    24                        	extern	~~mouse3
+    25                        	extern	~~mouse4
+    26                        	extern	~~mousepresent
+    27                        	extern	~~badmouse
+    28                        	extern	~~ticcount
+    29                        	extern	~~irqhook
+    30                        	extern	~~nmihook
+    31                        	extern	~~SampleControls
+    32                        	extern	~~MusicTic
+    33                        	extern	~~main
+    34                        	extern	~~sounds
+    35                        
+    36                        ;-------------------------------------------------
+                    -------------------
+    37                        
+    38                        	data
+    39 00:0000: 00 00        tmouse	dw	0
+    40 00:0002:              	ends
+    41                        
+    42                        ;-------------------------------------------------
+                    -------------------
+  Sat Oct  1 1994 17:28                                                Page 2
+
+
+    43                        
+    44                        	public	~~DEBUG		;jgt;
+    45                        	extern	~~IO_Debug
+    46                        
+    47 00:0000: E2 10        ~~DEBUG:	SI	;***************
+    48 00:0002: 7A           	ply			;Get processor status
+    49 00:0003: 68           	pla			;Get BRK address
+    50 00:0004: FA           	plx			;Get BRK bank
+    51 00:0005: C2 10        	LI	;***************
+    52 00:0007: 5A           	phy			;Pass them to IO_Debug a
+                    s
+    53 00:0008: 48           	pha			;  word args. in reverse
+                     order
+    54 00:0009: DA           	phx
+    55 00:000A: 22 xx xx xx  	jsl	~~IO_Debug	;Never returns!
+    56 00:000E: 00           	brk
+    57                        
+    58                        ;-------------------------------------------------
+                    -------------------
+    59                        
+    60                        	data
+    61                        
+    62                        	public	~~CompileDate
+    63                        
+    64 00:0002: 53 61 74 20  ~~CompileDate	DATE
+       00:0006: 4F 63 74 20 
+       00:000A: 20 31 20 31 
+       00:000E: 39 39 34 20 
+       00:0012: 31 37 3A 32 
+       00:0016: 38 
+    65                        
+    66                        	boot
+    67                        
+    68                        ;-------------------------------------------------
+                    -------------------
+    69                        ; For some reason ID placed 'pause' in the normal 
+                    code segment!
+    70                        
+    71                        	code
+    72                        
+    73 00:0000: E2 20        pause:	SA	;***************
+    74 00:0002: AF xx xx xx  p1	lda	>~~joystick1
+    75 00:0006: F0 FA        	beq	p1
+    76 00:0008: AF xx xx xx  p2	lda	>~~joystick1
+    77 00:000C: D0 FA        	bne	p2
+    78 00:000E: C2 20        	LA	;***************
+    79 00:0010: 6B           	rtl
+    80                        
+    81                        	boot
+    82                        
+    83                        ;=================================================
+                    ===================
+    84                        ; B should be C data bank
+    85                        ; Wait for auto read
+    86                        
+    87 00:000F: E2 20        ReadControls:	SA	;***************
+    88 00:0011: AF 12 42 00  joystickwait	lda	>HVBJOY		;Wait un
+                    til joypad is ready
+  Sat Oct  1 1994 17:28                                                Page 3
+
+
+    89 00:0015: 29 01        	and	#1		;Joystick busy flag
+    90 00:0017: D0 F8        	bne	joystickwait
+    91                        
+    92                        ;Read the joystick
+    93                        
+    94 00:0019: AF 18 42 00  	lda	>JOY1		;Get joypad value
+    95 00:001D: 8D xx xx     	sta	~~joystick1
+    96 00:0020: AF 19 42 00  	lda	>JOY1+1
+    97 00:0024: 8D xx xx     	sta	~~joystick1+1
+    98                        
+    99                        ;Read the mouse
+   100                        
+   101 00:0027: AF 1A 42 00  	lda	>JOY2		;Get auto read vals
+   102 00:002B: 8D xx xx     	sta	~~mouse1
+   103 00:002E: 29 0F        	and	#$F
+   104 00:0030: C9 01        	cmp	#1		;Mouse signature
+   105 00:0032: F0 06        	beq	mouseconnected
+   106 00:0034: 9C xx xx     	stz	~~mousepresent
+   107 00:0037: 4C xx xx     	jmp	mdone
+   108                        
+   109 00:003A: AD xx xx     mouseconnected	lda	~~mousepresent
+   110 00:003D: D0 08        	bne	readrest
+   111 00:003F: EE xx xx     	inc	~~mousepresent
+   112                        
+   113                        ;The mouse has not been initialized yet, make sure
+                     speed is cycled
+   114                        
+   115 00:0042: A9 FF        	lda	#$FF
+   116 00:0044: 8D xx xx     	sta	~~mouse1	;Make sure speed is not 
+                    correct
+   117                        
+   118                        ;If the mouse speed is not set to 0, cycle it and 
+                    reread
+   119                        
+   120 00:0047: AD xx xx     readrest	lda	~~mouse1
+   121 00:004A: 29 30        	and	#$30
+   122 00:004C: F0 13        	beq	speedcorrect
+   123                        
+   124 00:004E: A9 01        	lda	#1		;Cycle speed
+   125 00:0050: 8F 16 40 00  	sta	>$4016
+   126 00:0054: AF 17 40 00  	lda	>$4017
+   127 00:0058: A9 00        	lda	#0
+   128 00:005A: 8F 16 40 00  	sta	>$4016
+   129 00:005E: 4C xx xx     	jmp	joystickwait
+   130                        
+   131 00:0061: AF 1B 42 00  speedcorrect	lda	>JOY2+1
+   132 00:0065: 8D xx xx     	sta	~~mouse2
+   133                        
+   134 00:0068: 9C xx xx     	stz	~~badmouse
+   135                        
+   136 00:006B: AF 17 40 00  	lda	>$4017
+   137 00:006F: 4A           	lsr	a
+   138 00:0070: 2E xx xx     	rol	tmouse
+   139 00:0073: AF 17 40 00  	lda	>$4017
+   140 00:0077: 4A           	lsr	a
+   141 00:0078: 2E xx xx     	rol	tmouse
+   142 00:007B: AF 17 40 00  	lda	>$4017
+   143 00:007F: 4A           	lsr	a
+  Sat Oct  1 1994 17:28                                                Page 4
+
+
+   144                        
+   145 00:0080: 2E xx xx     	rol	tmouse
+   146 00:0083: AF 17 40 00  	lda	>$4017
+   147 00:0087: 4A           	lsr	a
+   148 00:0088: 2E xx xx     	rol	tmouse
+   149 00:008B: AF 17 40 00  	lda	>$4017
+   150 00:008F: 4A           	lsr	a
+   151 00:0090: 2E xx xx     	rol	tmouse
+   152 00:0093: AF 17 40 00  	lda	>$4017
+   153 00:0097: 4A           	lsr	a
+   154                        
+   155 00:0098: 2E xx xx     	rol	tmouse
+   156 00:009B: AF 17 40 00  	lda	>$4017
+   157 00:009F: 4A           	lsr	a
+   158 00:00A0: 2E xx xx     	rol	tmouse
+   159 00:00A3: AF 17 40 00  	lda	>$4017
+   160 00:00A7: 4A           	lsr	a
+   161 00:00A8: 2E xx xx     	rol	tmouse
+   162 00:00AB: AD xx xx     	lda	tmouse
+   163 00:00AE: 8D xx xx     	sta	~~mouse3
+   164                        
+   165 00:00B1: AF 17 40 00  	lda	>$4017
+   166 00:00B5: 4A           	lsr	a
+   167 00:00B6: 2E xx xx     	rol	tmouse
+   168 00:00B9: AF 17 40 00  	lda	>$4017
+   169 00:00BD: 4A           	lsr	a
+   170 00:00BE: 2E xx xx     	rol	tmouse
+   171                        
+   172 00:00C1: AF 17 40 00  	lda	>$4017
+   173 00:00C5: 4A           	lsr	a
+   174 00:00C6: 2E xx xx     	rol	tmouse
+   175 00:00C9: AF 17 40 00  	lda	>$4017
+   176 00:00CD: 4A           	lsr	a
+   177 00:00CE: 2E xx xx     	rol	tmouse
+   178 00:00D1: AF 17 40 00  	lda	>$4017
+   179 00:00D5: 4A           	lsr	a
+   180 00:00D6: 2E xx xx     	rol	tmouse
+   181                        
+   182 00:00D9: AF 17 40 00  	lda	>$4017
+   183 00:00DD: 4A           	lsr	a
+   184 00:00DE: 2E xx xx     	rol	tmouse
+   185 00:00E1: AF 17 40 00  	lda	>$4017
+   186 00:00E5: 4A           	lsr	a
+   187 00:00E6: 2E xx xx     	rol	tmouse
+   188 00:00E9: AF 17 40 00  	lda	>$4017
+   189 00:00ED: 4A           	lsr	a
+   190 00:00EE: 2E xx xx     	rol	tmouse
+   191 00:00F1: AD xx xx     	lda	tmouse
+   192 00:00F4: 8D xx xx     	sta	~~mouse4
+   193                        
+   194                        ;If joystick busy was ever set, the value is bad
+   195                        
+   196 00:00F7: AF 12 42 00  	lda	>HVBJOY		;If set, reread
+   197 00:00FB: 0D xx xx     	ora	~~badmouse
+   198 00:00FE: 29 01        	and	#1
+   199 00:0100: F0 13        	beq	mdone
+   200                        
+   201 00:0102: AF 12 42 00  waitnobusy	lda	>HVBJOY
+  Sat Oct  1 1994 17:28                                                Page 5
+
+
+   202 00:0106: 29 01        	and	#1
+   203 00:0108: D0 F8        	bne	waitnobusy
+   204 00:010A: AF 12 42 00  waitbusy	lda	>HVBJOY
+   205 00:010E: 29 01        	and	#1
+   206 00:0110: F0 F8        	beq	waitbusy
+   207 00:0112: 4C xx xx     	jmp	joystickwait
+   208                        
+   209 00:0115: C2 20        mdone	LA	;***************
+   210 00:0117: 60           	rts
+   211                        
+   212                        
+   213                        ;=================================================
+                    =============================
+   214                        
+   215 00:0118: C2 30        irqhandler:	LAI	;***************
+   216                        
+   217 00:011A: 8B           	phb			;Save everything
+   218 00:011B: 0B           	phd
+   219 00:011C: 48           	pha
+   220 00:011D: DA           	phx
+   221 00:011E: 5A           	phy
+   222                        
+   223 00:011F: F4 7E 7E     	pea	$7E7E
+   224 00:0122: AB           	plb
+   225 00:0123: AB           	plb			;Set data bank
+   226                        
+   227 00:0124: AF 11 42 00  	lda 	>TIMEUP		;Read & reset IRQ status
+                     flag
+   228                        
+   229 00:0128: EE xx xx     	inc	~~ticcount	;Increment global vbl co
+                    unter
+   230                        
+   231                        ;--- Call user handler -----------------
+   232                        
+   233 00:012B: AF xx xx xx  	lda	>irqflag
+   234 00:012F: D0 29        	bne	skipirq
+   235 00:0131: 1A           	inc	a
+   236 00:0132: 8F xx xx xx  	sta	>irqflag
+   237                        
+   238 00:0136: 20 xx xx     	jsr	ReadControls
+   239                        
+   240 00:0139: AD xx xx     	lda	~~irqhook
+   241 00:013C: AE xx xx     	ldx	~~irqhook+2
+   242 00:013F: F0 0E        	beq	.returnpoint	;If bank word is 0, don'
+                    t call it
+   243 00:0141: E2 10        	SI	;***************;Use short index for ban
+                    k bytes
+   244                        
+   245 00:0143: A0 xx        	ldy	#^(.returnpoint-1)
+   246 00:0145: 5A           	phy
+   247 00:0146: F4 xx xx     	pea	.returnpoint-1	;Push the address to ret
+                    urn to
+   248                        
+   249 00:0149: DA           	phx
+   250 00:014A: 3A           	dec	a		;RTL goes one past
+   251 00:014B: 48           	pha			;Push the address to cal
+                    l to
+   252                        
+  Sat Oct  1 1994 17:28                                                Page 6
+
+
+   253 00:014C: C2 10        	LI	;***************
+   254 00:014E: 6B           	rtl			;Jump to the hook
+   255                        
+   256                        ;---------------------------------------
+   257                        ; The hook will return to here:      (1)
+   258                        ;---------------------------------------
+   259                        
+   260                        .returnpoint
+   261 00:014F: 22 xx xx xx  	jsl	~~SampleControls
+   262 00:0153: 22 xx xx xx  	jsl	~~MusicTic
+   263                        
+   264                        ; Done
+   265 00:0157: 9C xx xx     	stz	irqflag
+   266 00:015A: 7A           skipirq:	ply
+   267 00:015B: FA           	plx
+   268 00:015C: 68           	pla
+   269 00:015D: 2B           	pld
+   270 00:015E: AB           	plb
+   271 00:015F: 40           	rti
+   272                        
+   273                        	data
+   274 00:0017: 00 00        nmiflag:	dw	0
+   275 00:0019: 00 00        irqflag:	dw	0
+   276                        	boot
+   277                        
+   278                        ;=================================================
+                    ===================
+   279                        
+   280 00:0160: C2 30        nmihandler:	LAI	;***************;Full 16
+                    -bit mode
+   281                        
+   282 00:0162: 8B           	phb			;Save everything
+   283 00:0163: 0B           	phd
+   284 00:0164: 48           	pha
+   285 00:0165: DA           	phx
+   286 00:0166: 5A           	phy
+   287                        
+   288 00:0167: AF xx xx xx  	lda	>nmiflag
+   289 00:016B: D0 31        	bne	skipnmi
+   290 00:016D: 1A           	inc	a
+   291 00:016E: 8F xx xx xx  	sta	>nmiflag
+   292                        
+   293 00:0172: F4 7E 7E     	pea	$7E7E
+   294 00:0175: AB           	plb
+   295 00:0176: AB           	plb			;Set data bank
+   296                        
+   297 00:0177: AF 10 42 00  	lda	>RDNMI		;Read and clear NMI flag
+   298                        
+   299 00:017B: EE xx xx     	inc	~~ticcount	;Increment global vbl co
+                    unter
+   300                        
+   301                        ;--- Call user handler -----------------
+   302                        
+   303 00:017E: AD xx xx     	lda	~~nmihook
+   304 00:0181: AE xx xx     	ldx	~~nmihook+2
+   305 00:0184: F0 0E        	beq	.returnpoint	;If bank word is 0, don'
+                    t call it
+   306 00:0186: E2 10        	SI	;***************;Use short index for ban
+  Sat Oct  1 1994 17:28                                                Page 7
+
+
+                    k bytes
+   307                        
+   308 00:0188: A0 xx        	ldy	#^(.returnpoint-1)
+   309 00:018A: 5A           	phy
+   310 00:018B: F4 xx xx     	pea	.returnpoint-1			; push t
+                    he address to return to
+   311                        
+   312 00:018E: DA           	phx
+   313 00:018F: 3A           	dec	a		;RTL goes one past
+   314 00:0190: 48           	pha			;Push the address to cal
+                    l to
+   315                        
+   316 00:0191: C2 10        	LI	;***************
+   317 00:0193: 6B           	rtl			;Jump to the hook
+   318                        
+   319                        
+   320                        ;---------------------------------------
+   321                        ; The hook will return to here:	     (2)
+   322                        ;---------------------------------------
+   323                        
+   324 00:0194: 20 xx xx     .returnpoint	jsr	ReadControls
+   325 00:0197: 22 xx xx xx  	jsl	~~MusicTic
+   326                        
+   327 00:019B: 9C xx xx     	stz	nmiflag
+   328                        
+   329 00:019E: 7A           skipnmi:	ply
+   330 00:019F: FA           	plx
+   331 00:01A0: 68           	pla
+   332 00:01A1: 2B           	pld
+   333 00:01A2: AB           	plb
+   334 00:01A3: 40           	rti
+   335                        
+   336                        
+   337                        ;=================================================
+                    ===================
+   338                        
+   339 00:01A4: 18           resethandler:	clc		;jgt; These 2 in
+                    structions were in ID's
+   340 00:01A5: FB           	xce		;jgt; final ROM but NOT in the s
+                    ource!
+   341                        
+   342 00:01A6: C2 30        	LAI	;***************;Full 16-bit mode
+   343                        
+   344 00:01A8: D8           	cld			;Clear decimal mode
+   345 00:01A9: A9 FF 0F     	lda	#$0FFF
+   346 00:01AC: 1B           	tcs			;Stack just below $1000
+   347 00:01AD: A9 00 00     	lda	#0
+   348 00:01B0: 5B           	tcd			;Direct page of 0
+   349                        
+   350 00:01B1: 20 xx xx     	jsr	clearhardware
+   351 00:01B4: 20 xx xx     	jsr	initsound
+   352                        
+   353                        	IF	0	;%%%%%%%
+   354                        
+   355                        	SA	;***************
+   356                        	lda	#$81		;Enable NMI and joystick
+                     reading
+   357                        	sta	>NMITIMEN	;jgt??? (should be #$21 
+  Sat Oct  1 1994 17:28                                                Page 8
+
+
+                    ???)
+   358                        	LA	;***************
+   359                        	SA	;***************
+   360                        	lda	#5
+   361                        	sta	>INIDISP
+   362                        	LA	;***************
+   363                        	jsl	pause
+   364                        	SA	;***************
+   365                        	lda	#10
+   366                        	sta	>INIDISP
+   367                        	LA	;***************
+   368                        	jsl	pause
+   369                        
+   370                        	ENDIF	;%%%%%%%%%%%%%%%
+   371                        
+   372 00:01B7: 20 xx xx     	jsr	initrambank
+   373                        
+   374                        	IF	ID_VERSION	;jgt;
+   375                        ;---------------------------------------
+   376                        ; Actually, this section was NOT in ID's
+   377                        ; ROM version of WOLF3D, but it was
+   378                        ; in their 'final' source code...
+   379                        ;
+   380                        
+   381                        	SA	;***************
+   382                        	lda	#15
+   383                        	sta	>INIDISP
+   384                        	LA	;***************
+   385                        *	jsl	pause
+   386                        
+   387                        ;---------------------------------------
+   388                        	ENDIF			;jgt;
+   389                        
+   390 00:01BA: E2 20        	SA	;***************
+   391 00:01BC: A9 81        	lda	#$81		;Enable NMI and joystick
+                     reading
+   392 00:01BE: 8F 00 42 00  	sta	>NMITIMEN	;jgt??? (should be #$21 
+                    ???)
+   393 00:01C2: C2 20        	LA	;***************
+   394                        
+   395 00:01C4: 58           	cli			;Begin normal operation
+   396 00:01C5: 5C xx xx xx  	jml	~~main		;Go to C code
+   397                        
+   398                        
+   399                        ;=================================================
+                    ===================
+   400                        
+   401 00:01C9: C2 10        clearhardware:	LI	;***************
+   402 00:01CB: E2 20        	SA	;***************
+   403                        
+   404 00:01CD: F4 00 00     	pea	$0000
+   405 00:01D0: AB           	plb
+   406 00:01D1: AB           	plb			;Set bank to 0 for hardw
+                    are regs
+   407                        
+   408 00:01D2: A0 00 00     	ldy	#0
+   409                        
+   410 00:01D5: BE xx xx     setbyte	ldx	inittable,y	;Get register ad
+  Sat Oct  1 1994 17:28                                                Page 9
+
+
+                    dress
+   411 00:01D8: F0 0B        	beq	chdone		;0 address is end of lis
+                    t
+   412 00:01DA: C8           	iny
+   413 00:01DB: C8           	iny
+   414 00:01DC: B9 xx xx     	lda	inittable,y	;Get initial value
+   415 00:01DF: C8           	iny
+   416 00:01E0: 9D 00 00     	sta	|0,x		;Set register
+   417 00:01E3: 80 F0        	bra	setbyte
+   418                        
+   419 00:01E5: C2 30        chdone	LAI	;***************;Back to 16-bit 
+                    mode
+   420 00:01E7: 60           	rts
+   421                        
+   422                        ;---------------------------------------
+   423                        
+   424                        VREG	MACRO	reg,val
+   425                        	dw	reg
+   426                        	db	val
+   427                        	ENDM
+   428                        
+   429 00:01E8: 00 21 8F     inittable	VREG	$2100,$8F
+   430 00:01EB: 01 21 00     	VREG	$2101,0
+   431 00:01EE: 02 21 00     	VREG	$2102,0
+   432 00:01F1: 03 21 00     	VREG	$2103,0
+   433                        
+   434 00:01F4: 05 21 00     	VREG	$2105,0
+   435 00:01F7: 06 21 00     	VREG	$2106,0
+   436 00:01FA: 07 21 00     	VREG	$2107,0
+   437 00:01FD: 08 21 00     	VREG	$2108,0
+   438 00:0200: 09 21 00     	VREG	$2109,0
+   439 00:0203: 0A 21 00     	VREG	$210A,0
+   440 00:0206: 0B 21 00     	VREG	$210B,0
+   441 00:0209: 0C 21 00     	VREG	$210C,0
+   442 00:020C: 0D 21 00     	VREG	$210D,0
+   443 00:020F: 0D 21 00     	VREG	$210D,0
+   444 00:0212: 0E 21 00     	VREG	$210E,0
+   445 00:0215: 0E 21 00     	VREG	$210E,0
+   446 00:0218: 0F 21 00     	VREG	$210F,0
+   447 00:021B: 0F 21 00     	VREG	$210F,0
+   448 00:021E: 10 21 00     	VREG	$2110,0
+   449 00:0221: 10 21 00     	VREG	$2110,0
+   450 00:0224: 11 21 00     	VREG	$2111,0
+   451 00:0227: 11 21 00     	VREG	$2111,0
+   452 00:022A: 12 21 00     	VREG	$2112,0
+   453 00:022D: 12 21 00     	VREG	$2112,0
+   454 00:0230: 13 21 00     	VREG	$2113,0
+   455 00:0233: 13 21 00     	VREG	$2113,0
+   456 00:0236: 14 21 00     	VREG	$2114,0
+   457 00:0239: 14 21 00     	VREG	$2114,0
+   458 00:023C: 15 21 80     	VREG	$2115,$80
+   459 00:023F: 16 21 00     	VREG	$2116,0
+   460 00:0242: 17 21 00     	VREG	$2117,0
+   461                        
+   462 00:0245: 1A 21 00     	VREG	$211A,0
+   463 00:0248: 1B 21 00     	VREG	$211B,0
+   464 00:024B: 1B 21 01     	VREG	$211B,1
+   465 00:024E: 1C 21 00     	VREG	$211C,0
+  Sat Oct  1 1994 17:28                                                Page 10
+
+
+   466 00:0251: 1C 21 00     	VREG	$211C,0
+   467 00:0254: 1D 21 00     	VREG	$211D,0
+   468 00:0257: 1D 21 00     	VREG	$211D,0
+   469 00:025A: 1E 21 00     	VREG	$211E,0
+   470 00:025D: 1E 21 01     	VREG	$211E,1
+   471 00:0260: 1F 21 00     	VREG	$211F,0
+   472 00:0263: 1F 21 00     	VREG	$211F,0
+   473 00:0266: 20 21 00     	VREG	$2120,0
+   474 00:0269: 20 21 00     	VREG	$2120,0
+   475 00:026C: 21 21 00     	VREG	$2121,0
+   476                        
+   477 00:026F: 23 21 00     	VREG	$2123,0
+   478 00:0272: 24 21 00     	VREG	$2124,0
+   479 00:0275: 25 21 00     	VREG	$2125,0
+   480 00:0278: 26 21 00     	VREG	$2126,0
+   481 00:027B: 27 21 00     	VREG	$2127,0
+   482 00:027E: 28 21 00     	VREG	$2128,0
+   483 00:0281: 29 21 00     	VREG	$2129,0
+   484 00:0284: 2A 21 00     	VREG	$212A,0
+   485 00:0287: 2B 21 00     	VREG	$212B,0
+   486 00:028A: 2C 21 00     	VREG	$212C,0
+   487 00:028D: 2D 21 00     	VREG	$212D,0
+   488 00:0290: 2E 21 00     	VREG	$212E,0
+   489 00:0293: 2F 21 00     	VREG	$212F,0
+   490 00:0296: 30 21 30     	VREG	$2130,$30
+   491 00:0299: 31 21 00     	VREG	$2131,0
+   492 00:029C: 32 21 E0     	VREG	$2132,$E0
+   493 00:029F: 33 21 00     	VREG	$2133,0
+   494                        
+   495 00:02A2: 00 42 00     	VREG	$4200,0
+   496 00:02A5: 01 42 FF     	VREG	$4201,$FF
+   497 00:02A8: 02 42 00     	VREG	$4202,0
+   498 00:02AB: 03 42 00     	VREG	$4203,0
+   499 00:02AE: 04 42 00     	VREG	$4204,0
+   500 00:02B1: 05 42 00     	VREG	$4205,0
+   501 00:02B4: 06 42 00     	VREG	$4206,0
+   502 00:02B7: 07 42 00     	VREG	$4207,0
+   503 00:02BA: 08 42 00     	VREG	$4208,0
+   504 00:02BD: 09 42 00     	VREG	$4209,0
+   505 00:02C0: 0A 42 00     	VREG	$420A,0
+   506 00:02C3: 0B 42 00     	VREG	$420B,0
+   507 00:02C6: 0C 42 00     	VREG	$420C,0
+   508 00:02C9: 0D 42 01     	VREG	$420D,1		; 1 = high speed
+   509                        
+   510 00:02CC: 00 00        	dw	0		;End of list marker
+   511                        
+   512                        
+   513                        ;=================================================
+                    ===================
+   514                        ; Setup DATA & UDATA sections in RAM
+   515                        
+   516                        	xref	_BEG_DATA
+   517                        	xref	_END_DATA
+   518                        	xref	_END_KDATA
+   519                        	xref	_BEG_UDATA
+   520                        	xref	_END_UDATA
+   521                        
+   522                        initrambank:
+  Sat Oct  1 1994 17:28                                                Page 11
+
+
+   523                        
+   524                        ;---------------------------------------
+   525                        ; Set up DATA BANK register to point to
+   526                        ; the DATA section
+   527                        ;---------------------------------------
+   528                        
+   529 00:02CE: E2 20        	SA	;***************
+   530 00:02D0: A9 xx        	lda	#^_BEG_DATA	;Get bank of data
+   531 00:02D2: 48           	pha
+   532 00:02D3: AB           	plb			;Set data bank register
+   533 00:02D4: C2 20        	LA	;***************
+   534                        
+   535                        ;---------------------------------------
+   536                        ; Copy initialized data from ROM to RAM;
+   537                        ; Initialized data follows constant data
+   538                        ; section (KDATA)...
+   539                        ;---------------------------------------
+   540                        
+   541                        ; NOTE: SNES for some reason will crash
+   542                        ;  if MVN is used to transfer the data!
+   543                        
+   544 00:02D6: A0 xx xx     	ldy	#_END_DATA-_BEG_DATA ;# of bytes to copy
+   545 00:02D9: F0 12        	beq	.skip		;If none, just skip
+   546                        
+   547 00:02DB: A2 00 00     	ldx	#0		;Clear index (!Note: Ass
+                    umes start of bank!)
+   548 00:02DE: E2 20        	SA	;***************
+   549 00:02E0: BF xx xx xx  .dloop	lda	>_END_KDATA,x	;Get byte from R
+                    OM
+   550 00:02E4: 9D xx xx     	sta	|_BEG_DATA,x	;Store into RAM
+   551 00:02E7: E8           	inx			;Bump pointer
+   552 00:02E8: 88           	dey			;Decrement count
+   553 00:02E9: D0 F5        	bne	.dloop		;Continue until done
+   554 00:02EB: C2 20        	LA	;***************
+   555                        
+   556                        ;---------------------------------------
+   557                        ;Clear uninitialized data area (UDATA)
+   558                        ;---------------------------------------
+   559                        
+   560 00:02ED: A0 xx xx     .skip	ldy	#_END_UDATA-_BEG_UDATA  ;Get num
+                    ber of bytes to clear
+   561 00:02F0: F0 11        	beq	.done		;Nothing to do
+   562                        
+   563 00:02F2: A9 00 00     	lda	#0		;Get a zero for storing
+   564 00:02F5: E2 20        	SA	;***************
+   565 00:02F7: A2 xx xx     	ldx	#_BEG_UDATA	;Get beginning of zeros
+   566                        
+   567 00:02FA: 9D 00 00     .uloop	sta	|0,x		;Clear memory
+   568 00:02FD: E8           	inx			;Bump pointer
+   569 00:02FE: 88           	dey			;Decrement count
+   570 00:02FF: D0 F9        	bne	.uloop		;Continue until done
+   571 00:0301: C2 20        	LA	;***************
+   572                        
+   573 00:0303: 60           .done	rts
+   574                        
+   575                        
+   576                        ;=================================================
+                    ===================
+  Sat Oct  1 1994 17:28                                                Page 12
+
+
+   577                        
+   578 00:0304: F4 00 00     initsound:	pea	0
+   579 00:0307: AB           	plb
+   580 00:0308: AB           	plb			;For hardware regs
+   581 00:0309: 9C 40 21     	stz	SPC700Port1	;Clear all four sound po
+                    rts
+   582 00:030C: 9C 42 21     	stz	SPC700Port3
+   583                        
+   584 00:030F: F4 xx xx     	pea	$0000+^~~sounds
+   585 00:0312: F4 xx xx     	pea	~~sounds
+   586 00:0315: 22 xx xx xx  	jsl	UploadSnd
+   587                        
+   588                        	IF	0	;%%%%%%%
+   589                        
+   590                        	lda	#$FF
+   591                        wait	bit	SPC700Port1 	;Wait for driver
+                     to start up
+   592                        	bne	wait
+   593                        
+   594                        	ENDIF	;%%%%%%%%%%%%%%%
+   595                        
+   596 00:0319: 60           	rts
+   597                        
+   598                        
+   599                        ;---------------------------------------
+   600                        ; Upload sound data to the SPC700
+   601                        ; processor...
+   602                        ; 
+   603                        ; Data must be formatted with:
+   604                        ;
+   605                        ; DA Length
+   606                        ; DA TrueAddress
+   607                        ; DB Bytes
+   608                        ;
+   609                        ; DA 0
+   610                        ; DA Jump address
+   611                        ;---------------------------------------
+   612                        
+   613                        	LCLSTART
+   614                        
+   615                        	ARGSTART
+   616                        	ARGD	UploadPointer
+   617                        
+   618 00:031A: 3B 38 E9 00  UploadSnd:	PROLOGUE
+       00:031E: 00 1B 0B 5B 
+   619                        
+   620 00:0322: 08           	php			;Save interrupt flag
+   621 00:0323: 78           	sei
+   622 00:0324: A0 00 00     	ldy	#0		;Init my master index
+   623 00:0327: A9 AA BB     	lda	#$BBAA		;Main signature
+   624 00:032A: CD 40 21     WaitBBAA	cmp	SPC700Port1	;Wait until SPCP
+                    ort is ready
+   625 00:032D: D0 FB        	bne	WaitBBAA
+   626 00:032F: E2 20        	SA	;***************
+   627 00:0331: A9 CC        	lda	#$CC		;First Handshake byte
+   628 00:0333: 80 26        	bra	BeginLoad	;Merge
+   629                        
+   630 00:0335: B7 04        BeginPacket	lda	[UploadPointer],Y ;Get a
+  Sat Oct  1 1994 17:28                                                Page 13
+
+
+                     byte of data
+   631 00:0337: C8           	iny			;+1 to pointer
+   632 00:0338: EB           	xba			;Save byte in "B"
+   633 00:0339: A9 00        	lda	#0		;Init handshake byte
+   634 00:033B: 80 0B        	bra	Merge2		;Merge
+   635                        
+   636                        * Main data transfer loop
+   637                        * "X" has byte count
+   638                        
+   639 00:033D: EB           ByteLoop	xba			;Put handshake b
+                    yte in "B"
+   640 00:033E: B7 04        	lda	[UploadPointer],Y ;Get byte to transfer
+   641 00:0340: C8           	iny
+   642 00:0341: EB           	xba
+   643 00:0342: CD 40 21     WaitHand1	cmp	SPC700Port1	;Wait for handsh
+                    ake
+   644 00:0345: D0 FB        	bne	WaitHand1
+   645 00:0347: 1A           	inc	a		;+1 to handshake byte (8
+                     bit)
+   646 00:0348: C2 20        Merge2	LA	;***************;16-bit
+   647 00:034A: 8D 40 21     	sta	SPC700Port1	;Write data and sync byt
+                    e
+   648 00:034D: E2 20        	SA	;***************;8-bit
+   649 00:034F: CA           	dex			;Count down
+   650 00:0350: D0 EB        	bne	ByteLoop
+   651                        
+   652 00:0352: CD 40 21     WaitHand2	cmp	SPC700Port1	;Wait for final 
+                    handshake
+   653 00:0355: D0 FB        	bne	WaitHand2
+   654 00:0357: 69 03        FixHand	adc	#4-1		;Make a new hand
+                    shake byte (BUT DON'T
+   655 00:0359: F0 FC        	beq	FixHand		; use #0!!)
+   656                        
+   657                        * Get the header for an upload packet
+   658                        
+   659 00:035B: 48           BeginLoad	pha			;Save initial ha
+                    ndshake value
+   660 00:035C: C2 20        	LA	;***************;16-bit
+   661 00:035E: B7 04        	lda	[UploadPointer],Y ;Get length of data
+   662 00:0360: C8           	iny			;+2 to pointer
+   663 00:0361: C8           	iny
+   664 00:0362: AA           	tax			;Put length in X
+   665 00:0363: B7 04        	lda	[UploadPointer],Y ;Get address of data t
+                    ransfer
+   666 00:0365: C8           	iny
+   667 00:0366: C8           	iny
+   668 00:0367: 8D 42 21     	sta	SPC700Port3	;Save data transfer addr
+                    ess to SPC700
+   669                        
+   670 00:036A: E2 20        	SA	;***************;8-bit
+   671 00:036C: E0 01 00     	cpx	#1		;Zero bytes to transfer?
+   672 00:036F: A9 00        	lda	#0		;0 or 1
+   673 00:0371: 2A           	rol	a		;Save a 1 if a packet is
+                     to be sent
+   674 00:0372: 8D 41 21     	sta	SPC700Port2	;  otherwise send a zero
+   675 00:0375: 69 7F        	adc	#$7F		;Set overflow if #1
+   676 00:0377: 68           	pla			;Restore handshake byte
+   677 00:0378: 8D 40 21     	sta	SPC700Port1	;Send handshake (Initiat
+  Sat Oct  1 1994 17:28                                                Page 14
+
+
+                    e command)
+   678 00:037B: CD 40 21     WaitAgain	cmp	SPC700Port1	;Wait for ACK
+   679 00:037E: D0 FB        	bne	WaitAgain
+   680 00:0380: 70 B3        	bvs	BeginPacket	;Packet? (Begin it)
+   681 00:0382: C2 20        	LA	;***************;Restore 16-bit mode
+   682 00:0384: 9C 40 21     	stz	SPC700Port1	;End transfer by clearin
+                    g all ports
+   683 00:0387: 9C 42 21     	stz	SPC700Port3
+   684 00:038A: 28           	plp			;Restore IRQ flags
+   685                        
+   686 00:038B: A8 A5 02 85  	EPILOGUE		;RTL!
+       00:038F: 06 A5 01 85 
+       00:0393: 05 2B 3B 18 
+       00:0397: 69 04 00 1B 
+       00:039B: 98 6B 
+   687                        
+   688                        
+   689                        ;=================================================
+                    ===================
+   690                        
+   691 00:039D: 18           irqvector:	clc
+   692 00:039E: FB           	xce
+   693 00:039F: 5C xx xx xx  	jml	>irqhandler	;Jump to fast rom
+   694                        
+   695 00:03A3: 18           nmivector:	clc
+   696 00:03A4: FB           	xce
+   697 00:03A5: 5C xx xx xx  	jml	>nmihandler	;Jump to fast rom
+   698                        
+   699                        resetvector:
+   700                        	IF	ID_VERSION	;jgt;
+   701                        ;---------------------------------------
+   702                        ; Actually, this section was NOT in ID's
+   703                        ; ROM version of WOLF3D, but it was
+   704                        ; in their 'final' source code...
+   705                        ;
+   706                        
+   707                        	SA	;***************
+   708                        	lda	#0
+   709                        	sta	INIDISP
+   710                        
+   711                        ;---------------------------------------
+   712                        	ENDIF			;jgt;
+   713                        
+   714 00:03A9: 18           	clc
+   715 00:03AA: FB           	xce
+   716 00:03AB: 5C xx xx xx  	jml	>resethandler	;Jump to fast rom
+   717                        
+   718                        
+   719                        ;=================================================
+                    ===================
+   720                        ;		65816 Interrupt vectors
+   721                        ;=================================================
+                    ===================
+   722                        
+   723                        vectors	section	;offset	$C0FFE0	;65816 Interrupt
+                     vectors, etc.
+   724                        
+   725 00:0000: xx xx        vectors:	dw	~~DEBUG		;$FFE0		
+  Sat Oct  1 1994 17:28                                                Page 15
+
+
+                    ;NATIVE
+   726 00:0002: xx xx        	dw	~~DEBUG		;$FFE2
+   727 00:0004: xx xx        	dw	~~DEBUG		;$FFE4	COP (COProcessor
+                    )
+   728 00:0006: xx xx        	dw	~~DEBUG		;$FFE6	BRK
+   729 00:0008: xx xx        	dw	~~DEBUG		;$FFE8	ABORT
+   730 00:000A: xx xx        	dw	nmivector	;$FFEA	IRQ
+   731 00:000C: xx xx        	dw	resetvector	;$FFEC	RESET
+   732 00:000E: xx xx        	dw	irqvector	;$FFEE	IRQ
+   733                        
+   734 00:0010: xx xx        	dw	~~DEBUG		;$FFF0		;EMULATI
+                    ON
+   735 00:0012: xx xx        	dw	~~DEBUG		;$FFF2
+   736 00:0014: xx xx        	dw	~~DEBUG		;$FFF4
+   737 00:0016: xx xx        	dw	~~DEBUG		;$FFF6
+   738 00:0018: xx xx        	dw	~~DEBUG		;$FFF8	ABORT
+   739 00:001A: xx xx        	dw	nmivector	;$FFFA	NMI
+   740 00:001C: xx xx        	dw	resetvector	;$FFFC	RESET
+   741 00:001E: xx xx        	dw	irqvector	;$FFFE	IRQ
+   742                        
+   743                        ;-------------------------------------------------
+                    -------------------
+   744                        
+   745 00:0020:              	ends
+   746                        	end
+
+
+      Lines assembled: 1341
+      Errors: 0

@@ -220,9 +220,8 @@ typedef	struct
 	ushort	gas, missiles;
 	ushort	keys;
 	boolean	machinegun,chaingun, missile, flamethrower;
-#ifndef	ID_VERSION
 	boolean	automap;
-#endif
+
 	weapontype	weapon, pendingweapon;
 	ushort	attackframe,attackcount;
 

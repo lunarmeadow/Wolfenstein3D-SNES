@@ -43,6 +43,9 @@ enum {
 	D_INC,		// 39
 	D_KEY,		// 40
 	D_PUSH,		// 41
+	// redefine missing wolf3d audio
+	D_ESEE,		// 42
+	D_ESEE2,	// 43
 NUMSOUNDS };
 
 #define	SHAREDSTART	22

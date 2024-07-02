@@ -7,6 +7,8 @@ extern char finetan;
 extern char finesin;
 extern char viewtox;
 extern char xtoview;
+extern char ballmap;
+extern char logos;
 extern char credpal;
 extern char dimpal;
 extern char credit;

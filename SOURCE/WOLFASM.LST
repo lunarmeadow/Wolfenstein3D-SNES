@@ -1,0 +1,1903 @@
+  Thu Oct  6 1994 15:05                                                Page 1
+
+
+                     ***************************************
+                     **   Zardoz 65C816 Macro Assembler   **
+                     **                                   **
+                     **     Version 2.0h - Aug 11 1994    **
+                     ***************************************
+
+     1                        *-------------------------------------------------
+                    -------------------
+     2                        * WOLFASM.ASM
+     3                        *-------------------------------------------------
+                    -------------------
+     4                        
+     5                        	spaces	on
+     6                        	llchar	.
+     7                        
+     8                        	include idmacros.asm
+     9                        	include	snes.equ
+    10                        
+    11             00002140   SPC700Port0	set	$2140
+    12             00002141   SPC700Port1	set	$2141
+    13             00002142   SPC700Port2	set	$2142
+    14             00002143   SPC700Port3	set	$2143
+    15                        
+    16                        	code
+    17                        
+    18                        	public	~~UnBlankVideo
+    19                        	public	~~BlankVideo
+    20                        
+    21                        ;=================================================
+                    ===================
+    22                        ;		EXTERNALS
+    23                        ;=================================================
+                    ===================
+    24                        
+    25                        	extern	~~ramscalers
+    26                        	extern	~~unwound
+    27                        	extern	~~unwoundcount
+    28                        	extern	~~basesrc
+    29                        	extern	~~screenbuffer
+    30                        
+    31                        	extern	~~SndWait
+    32                        	extern	~~SndCmd
+    33                        	extern	~~currate
+    34                        	extern	~~introhack
+    35                        	extern	~~playback
+    36                        	extern	~~lastcmd
+    37                        	extern	~~driverflag
+    38                        	extern	~~~MUL2
+    39                        	extern	~~fadelevel
+    40                        
+    41                        	extern	~~notetable1,~~notetable2,~~notetable3
+    42                        	extern	~~notetable4,~~notetable5
+    43                        
+    44                        	extern	~~veltable1,~~veltable2,~~veltable3
+    45                        	extern	~~veltable4,~~veltable5,~~veltable6
+    46                        	extern	~~veltable7,~~veltable8
+    47                        
+    48                        ;-------------------------------------------------
+  Thu Oct  6 1994 15:05                                                Page 2
+
+
+                    -------------------
+    49                        ; void FastMap (ushort basesrc)
+    50                        ;
+    51                        
+    52                        	public	~~FastMap
+    53                        
+    54             007F4300   ~~ramscalers	equ	$7F4300	;See RWALL.ASM!!
+    55             007F4300   bigpic	equ	~~ramscalers
+    56                        
+    57                        	LCLSTART
+    58                        	LCLW	map
+    59                        	LCLW	count
+    60                        	LCLW	ofs1
+    61                        	LCLW	ofs2
+    62                        	LCLW	ofs3
+    63                        	LCLW	ofs4
+    64                        
+    65                        	ARGSTART
+    66                        	ARGW	basesrc
+    67                        
+    68 00:0000: 3B 38 E9 0C  ~~FastMap:	PROLOGUE
+       00:0004: 00 1B 0B 5B 
+    69                        
+    70 00:0008: 8B           	phb
+    71                        
+    72 00:0009: AD xx xx     	lda	~~unwound
+    73 00:000C: 85 01        	sta	<map
+    74 00:000E: AD xx xx     	lda	~~unwoundcount
+    75 00:0011: 4A           	lsr	a
+    76 00:0012: 4A           	lsr	a
+    77 00:0013: 85 03        	sta	<count
+    78                        
+    79 00:0015: F4 7F 7F     	pea	$7F7F
+    80 00:0018: AB           	plb
+    81 00:0019: AB           	plb
+    82 00:001A: A6 01        	ldx	<map
+    83                        
+    84 00:001C: 18           	clc
+    85                        
+    86 00:001D: A4 10        .loop	ldy	<basesrc
+    87 00:001F: 98           	tya
+    88 00:0020: 7D 04 00     	adc	!$7F0004,x	;Source address
+    89 00:0023: 85 07        	sta	<ofs2
+    90 00:0025: 98           	tya
+    91 00:0026: 7D 08 00     	adc	!$7F0008,x	;Source address
+    92 00:0029: 85 09        	sta	<ofs3
+    93 00:002B: 98           	tya
+    94 00:002C: 7D 0C 00     	adc	!$7F000C,x	;Source address
+    95 00:002F: 85 0B        	sta	<ofs4
+    96 00:0031: 98           	tya
+    97 00:0032: 7D 00 00     	adc	!$7F0000,x	;Source address
+    98                        *	sta	<ofs1
+    99 00:0035: A8           	tay
+   100                        
+   101 00:0036: E2 20        	SA	;***************
+   102                        
+   103                        *	ldy	<ofs1
+   104 00:0038: B9 00 43     	lda	!bigpic,y
+  Thu Oct  6 1994 15:05                                                Page 3
+
+
+   105 00:003B: BC 02 00     	ldy	!$7F0002,x	;Dest address
+   106 00:003E: 99 xx xx     	sta	!~~screenbuffer+16*80,y
+   107                        
+   108 00:0041: A4 07        	ldy	<ofs2
+   109 00:0043: B9 00 43     	lda	!bigpic,y
+   110 00:0046: BC 06 00     	ldy	!$7F0006,x	;Dest address
+   111 00:0049: 99 xx xx     	sta	!~~screenbuffer+16*80,y
+   112                        
+   113 00:004C: A4 09        	ldy	<ofs3
+   114 00:004E: B9 00 43     	lda	!bigpic,y
+   115 00:0051: BC 0A 00     	ldy	!$7F000A,x	;Dest address
+   116 00:0054: 99 xx xx     	sta	!~~screenbuffer+16*80,y
+   117                        
+   118 00:0057: A4 0B        	ldy	<ofs4
+   119 00:0059: B9 00 43     	lda	!bigpic,y
+   120 00:005C: BC 0E 00     	ldy	!$7F000E,x	;Dest address
+   121 00:005F: 99 xx xx     	sta	!~~screenbuffer+16*80,y
+   122                        
+   123 00:0062: C2 20        	LA	;***************
+   124                        
+   125 00:0064: 8A           	txa
+   126 00:0065: 69 10 00     	adc	#16
+   127 00:0068: AA           	tax
+   128                        
+   129 00:0069: C6 03        	dec	<count
+   130 00:006B: D0 B0        	bne	.loop
+   131                        
+   132 00:006D: AB           	plb
+   133                        
+   134 00:006E: A8 A5 0E 85  	EPILOGUE		;RTL!
+       00:0072: 10 A5 0D 85 
+       00:0076: 0F 2B 3B 18 
+       00:007A: 69 0E 00 1B 
+       00:007E: 98 6B 
+   135                        
+   136                        
+   137                        ;-------------------------------------------------
+                    -------------------
+   138                        ; void IO_NoteOn (ushort channel, ushort instrumen
+                    t, ushort note
+   139                        ;	  ushort velocity)
+   140                        
+   141                        
+   142             00000004   DRV_ASSIGN	equ  4
+   143             00000006   DRV_MUSICON	equ  6
+   144                        
+   145                        	public	~~IO_NoteOn
+   146                        
+   147                        	LCLSTART
+   148                        	LCLW	sfx
+   149                        	LCLW	rate
+   150                        
+   151                        	ARGSTART
+   152                        	ARGW	channel
+   153                        	ARGW	instrument
+   154                        	ARGW	note
+   155                        	ARGW	velocity
+   156                        
+  Thu Oct  6 1994 15:05                                                Page 4
+
+
+   157 00:0080: 3B 38 E9 04  ~~IO_NoteOn:	PROLOGUE
+       00:0084: 00 1B 0B 5B 
+   158                        
+   159 00:0088: 08           	php
+   160 00:0089: 78           	sei
+   161                        
+   162 00:008A: A5 0A        	lda	<instrument
+   163 00:008C: C9 A3 00     	cmp	#128+35
+   164 00:008F: F0 43        	beq	bassdrum
+   165 00:0091: C9 A4 00     	cmp	#128+36
+   166 00:0094: F0 3E        	beq	bassdrum
+   167 00:0096: C9 A6 00     	cmp	#128+38
+   168 00:0099: F0 4B        	beq	snaredrum
+   169 00:009B: C9 A8 00     	cmp	#128+40
+   170 00:009E: F0 46        	beq	snaredrum
+   171 00:00A0: C9 AA 00     	cmp	#128+42
+   172 00:00A3: F0 56        	beq	hihat
+   173 00:00A5: C9 AC 00     	cmp	#128+44
+   174 00:00A8: F0 51        	beq	hihat
+   175 00:00AA: C9 AE 00     	cmp	#128+46
+   176 00:00AD: F0 4C        	beq	hihat
+   177                        
+   178 00:00AF: C9 11 00     	cmp	#17
+   179 00:00B2: F0 5C        	beq	organ
+   180 00:00B4: C9 44 00     	cmp	#68
+   181 00:00B7: F0 71        	beq	oboe
+   182 00:00B9: C9 4B 00     notoboe	cmp	#75
+   183 00:00BC: D0 03        	bne	notpanflute
+   184 00:00BE: 4C xx xx     	jmp	panflute
+   185 00:00C1: C9 39 00     notpanflute	cmp	#57
+   186 00:00C4: D0 03        	bne	nottrombone
+   187 00:00C6: 4C xx xx     	jmp	trombone
+   188 00:00C9: C9 24 00     nottrombone	cmp	#36
+   189 00:00CC: D0 03        	bne	notslapbass
+   190 00:00CE: 4C xx xx     	jmp	slapbass
+   191                        
+   192 00:00D1: 4C xx xx     notslapbass	jmp	done		;jgt;
+   193                        
+   194 00:00D4: 64 01        bassdrum:	stz	<sfx
+   195 00:00D6: A9 21 0E     	lda	#$e21
+   196 00:00D9: 85 03        	sta	<rate
+   197 00:00DB: A6 0E        	ldx	<velocity
+   198 00:00DD: BF xx xx xx  	lda	>~~veltable1,x
+   199 00:00E1: 85 0E        	sta	<velocity
+   200 00:00E3: 4C xx xx     	jmp	playit
+   201                        
+   202 00:00E6: A9 01 00     snaredrum:	lda	#1
+   203 00:00E9: 85 01        	sta	<sfx
+   204 00:00EB: A9 C2 52     	lda	#$52c2
+   205 00:00EE: 85 03        	sta	<rate
+   206 00:00F0: A6 0E        	ldx	<velocity
+   207 00:00F2: BF xx xx xx  	lda	>~~veltable2,x
+   208 00:00F6: 85 0E        	sta	<velocity
+   209 00:00F8: 4C xx xx     	jmp	playit
+   210                        
+   211 00:00FB: A9 02 00     hihat:	lda	#2
+   212 00:00FE: 85 01        	sta	<sfx
+   213 00:0100: A9 20 56     	lda	#$5620
+  Thu Oct  6 1994 15:05                                                Page 5
+
+
+   214 00:0103: 85 03        	sta	<rate
+   215 00:0105: A6 0E        	ldx	<velocity
+   216 00:0107: BF xx xx xx  	lda	>~~veltable3,x
+   217 00:010B: 85 0E        	sta	<velocity
+   218 00:010D: 4C xx xx     	jmp	playit
+   219                        
+   220 00:0110: A9 03 00     organ:	lda	#3
+   221 00:0113: 85 01        	sta	<sfx
+   222 00:0115: A5 0C        	lda	<note
+   223 00:0117: 0A           	asl	a
+   224 00:0118: AA           	tax
+   225 00:0119: BF xx xx xx  	lda	>~~notetable1,x
+   226 00:011D: 85 03        	sta	<rate
+   227 00:011F: A6 0E        	ldx	<velocity
+   228 00:0121: BF xx xx xx  	lda	>~~veltable4,x
+   229 00:0125: 85 0E        	sta	<velocity
+   230 00:0127: 4C xx xx     	jmp	playit
+   231                        
+   232 00:012A: A9 04 00     oboe:	lda	#4
+   233 00:012D: 85 01        	sta	<sfx
+   234 00:012F: A5 0C        	lda	<note
+   235 00:0131: 0A           	asl	a
+   236 00:0132: AA           	tax
+   237 00:0133: BF xx xx xx  	lda	>~~notetable2,x
+   238 00:0137: 85 03        	sta	<rate
+   239 00:0139: A6 0E        	ldx	<velocity
+   240 00:013B: BF xx xx xx  	lda	>~~veltable5,x
+   241 00:013F: 85 0E        	sta	<velocity
+   242 00:0141: 4C xx xx     	jmp	playit
+   243                        
+   244 00:0144: A9 05 00     panflute:	lda	#5
+   245 00:0147: 85 01        	sta	<sfx
+   246 00:0149: A5 0C        	lda	<note
+   247 00:014B: 0A           	asl	a
+   248 00:014C: AA           	tax
+   249 00:014D: BF xx xx xx  	lda	>~~notetable3,x
+   250 00:0151: 85 03        	sta	<rate
+   251 00:0153: A6 0E        	ldx	<velocity
+   252 00:0155: BF xx xx xx  	lda	>~~veltable6,x
+   253 00:0159: 85 0E        	sta	<velocity
+   254 00:015B: 4C xx xx     	jmp	playit
+   255                        
+   256 00:015E: A9 06 00     trombone:	lda	#6
+   257 00:0161: 85 01        	sta	<sfx
+   258 00:0163: A5 0C        	lda	<note
+   259 00:0165: 0A           	asl	a
+   260 00:0166: AA           	tax
+   261 00:0167: BF xx xx xx  	lda	>~~notetable4,x
+   262 00:016B: 85 03        	sta	<rate
+   263 00:016D: A6 0E        	ldx	<velocity
+   264 00:016F: BF xx xx xx  	lda	>~~veltable7,x
+   265 00:0173: 85 0E        	sta	<velocity
+   266 00:0175: 4C xx xx     	jmp	playit
+   267                        
+   268 00:0178: A9 07 00     slapbass:	lda	#7
+   269 00:017B: 85 01        	sta	<sfx
+   270 00:017D: A5 0C        	lda	<note
+   271 00:017F: 0A           	asl	a
+  Thu Oct  6 1994 15:05                                                Page 6
+
+
+   272 00:0180: AA           	tax
+   273 00:0181: BF xx xx xx  	lda	>~~notetable5,x
+   274 00:0185: 85 03        	sta	<rate
+   275 00:0187: A6 0E        	ldx	<velocity
+   276 00:0189: BF xx xx xx  	lda	>~~veltable8,x
+   277 00:018D: 85 0E        	sta	<velocity
+   278                        
+   279                        ; Assign the instrument
+   280                        
+   281 00:018F: 22 xx xx xx  playit:	jsl	~~SndWait
+   282 00:0193: E2 20        	SA	;***************
+   283 00:0195: A5 08        	lda	<channel
+   284 00:0197: 8F 40 21 00  	sta	>SPC700Port0
+   285 00:019B: A5 01        	lda	<sfx
+   286 00:019D: 8F 41 21 00  	sta	>SPC700Port1
+   287 00:01A1: C2 20        	LA	;***************
+   288 00:01A3: F4 04 00     	pea	DRV_ASSIGN
+   289 00:01A6: 22 xx xx xx  	jsl	~~SndCmd
+   290                        
+   291                        ; Start the note
+   292                        
+   293 00:01AA: 22 xx xx xx  	jsl	~~SndWait
+   294                        
+   295 00:01AE: A5 08        	lda	<channel
+   296 00:01B0: 0A           	asl	a
+   297 00:01B1: AA           	tax
+   298 00:01B2: A5 03        	lda	<rate
+   299 00:01B4: 9D xx xx     	sta	~~currate,x	;Rate for pitch bends
+   300 00:01B7: 8F 40 21 00  	sta	>SPC700Port0
+   301                        
+   302 00:01BB: E2 20        	SA	;***************
+   303 00:01BD: A5 0E        	lda	<velocity
+   304 00:01BF: 8F 42 21 00  	sta	>SPC700Port2
+   305 00:01C3: C2 20        	LA	;***************
+   306                        
+   307 00:01C5: A5 08        	lda	<channel
+   308 00:01C7: 0A           	asl	a
+   309 00:01C8: 0A           	asl	a
+   310 00:01C9: 0A           	asl	a
+   311 00:01CA: 0A           	asl	a
+   312 00:01CB: 09 06 00     	ora	#DRV_MUSICON
+   313 00:01CE: 48           	pha
+   314 00:01CF: 22 xx xx xx  	jsl	~~SndCmd	;SndCmd( (channel<<4) | 
+                    DRV_MUSICON)
+   315                        
+   316 00:01D3: 28           done:	plp
+   317                        
+   318 00:01D4: A8 A5 06 85  	EPILOGUE		;RTL!
+       00:01D8: 0E A5 05 85 
+       00:01DC: 0D 2B 3B 18 
+       00:01E0: 69 0C 00 1B 
+       00:01E4: 98 6B 
+   319                        
+   320                        
+   321                        ;=================================================
+                    ===================
+   322                        
+   323                        	public	~~BlitPlay
+  Thu Oct  6 1994 15:05                                                Page 7
+
+
+   324                        
+   325 00:01E6: 8B           ~~BlitPlay:	phb			;Save C 
+                    data bank
+   326 00:01E7: 0B           	phd			;Save C direct page
+   327 00:01E8: F4 00 00     	pea	0
+   328 00:01EB: AB           	plb
+   329 00:01EC: AB           	plb			;Set bank for hardware r
+                    egs
+   330 00:01ED: F4 00 43     	pea	$4300		;Save a few cycles with 
+                    direct page
+   331 00:01F0: 2B           	pld
+   332                        
+   333 00:01F1: E2 10        	SI	;***************
+   334                        
+   335                        	xref	~~bigpic
+   336                        
+   337 00:01F3: A9 xx xx     	lda	#~~screenbuffer
+   338 00:01F6: 8D 02 43     	sta	DMA0ADDR
+   339 00:01F9: A2 xx        	ldx	#^~~screenbuffer
+   340 00:01FB: 8E 04 43     	stx	DMA0BANK
+   341 00:01FE: A2 00        	ldx	#0
+   342 00:0200: 8E 00 43     	stx	DMA0PARMS	;Transfer bytes, increme
+                    nting
+   343 00:0203: A2 19        	ldx	#VMDATAH	;Transfer to high byte o
+                    f VRAM
+   344 00:0205: 8E 01 43     	stx	DMA0PORT
+   345                        
+   346 00:0208: A2 8C        	ldx	#$80+12
+   347 00:020A: 8E 15 21     	stx	VMAINC		;Increment by 8 for 128 
+                    times
+   348                        
+   349 00:020D: A2 50        	ldx	#80		;Always transfer 80 byte
+                    s
+   350 00:020F: A0 01        	ldy	#1		; enable DMA channel 0
+   351                        
+   352                        ;---------------------------------------
+   353                        ; DMA 112 columns of 80 bytes
+   354                        ;---------------------------------------
+   355                        
+   356             00000000   .column	set	0
+   357                        
+   358                        	REPT	112
+   359                        
+   360                        	stx	<DMA0LEN-$4300
+   361                        	lda	#.column*128+8
+   362                        	sta	VMADD
+   363                        	sty	MDMAEN
+   364                        .column	set	.column+1
+   365                        
+   366 00:0211: 86 05 A9 08  	ENDREPT
+       00:0215: 00 8D 16 21 
+       00:0219: 8C 0B 42 00 
+       00:021D: 00 00 01 86 
+       00:0221: 05 A9 88 00 
+       00:0225: 8D 16 21 8C 
+       00:0229: 0B 42 00 00 
+       00:022D: 00 02 86 05 
+       00:0231: A9 08 01 8D 
+  Thu Oct  6 1994 15:05                                                Page 8
+
+
+       00:0235: 16 21 8C 0B 
+       00:0239: 42 00 00 00 
+       00:023D: 03 86 05 A9 
+       00:0241: 88 01 8D 16 
+       00:0245: 21 8C 0B 42 
+       00:0249: 00 00 00 04 
+       00:024D: 86 05 A9 08 
+       00:0251: 02 8D 16 21 
+       00:0255: 8C 0B 42 00 
+       00:0259: 00 00 05 86 
+       00:025D: 05 A9 88 02 
+       00:0261: 8D 16 21 8C 
+       00:0265: 0B 42 00 00 
+       00:0269: 00 06 86 05 
+       00:026D: A9 08 03 8D 
+       00:0271: 16 21 8C 0B 
+       00:0275: 42 00 00 00 
+       00:0279: 07 86 05 A9 
+       00:027D: 88 03 8D 16 
+       00:0281: 21 8C 0B 42 
+       00:0285: 00 00 00 08 
+       00:0289: 86 05 A9 08 
+       00:028D: 04 8D 16 21 
+   367                        
+   368                        ;---------------------------------------
+   369                        ; Release forced blank
+   370                        ;---------------------------------------
+   371                        
+   372 00:06E1: 22 xx xx xx  	jsl	~~UnBlankVideo	;Returns in LAI mode!
+   373 00:06E5: AF xx xx xx  	lda	>~~introhack
+   374 00:06E9: D0 22        	bne	.done
+   375                        
+   376                        ; Clear the play screen to background colors
+   377                        
+   378 00:06EB: E2 10        	SI	;***************
+   379                        
+   380 00:06ED: A2 xx        	ldx	#^~~playback
+   381 00:06EF: 86 04        	stx	<DMA0BANK-$4300
+   382                        
+   383 00:06F1: A9 xx xx     	lda	#~~playback	;A few blank columns for
+                     the floor / ceiling
+   384 00:06F4: 85 02        	sta	<DMA0ADDR-$4300
+   385                        
+   386 00:06F6: A2 80        	ldx	#WMDATA		;Transfer to work ram
+   387 00:06F8: 8E 01 43     	stx	DMA0PORT
+   388                        
+   389 00:06FB: A9 xx xx     	lda	#~~screenbuffer	;Copy to ~~screenbuffer 
+                    in work ram
+   390 00:06FE: 8D 81 21     	sta	WMADD
+   391                        
+   392 00:0701: A9 00 23     	lda	#112*80		;Copy entire screen
+   393 00:0704: 85 05        	sta	<DMA0LEN-$4300
+   394                        
+   395 00:0706: A0 01        	ldy	#1		;Enable dma channel 0
+   396 00:0708: 8C 0B 42     	sty	MDMAEN
+   397                        
+   398 00:070B: C2 10        	LI	;***************
+   399                        
+  Thu Oct  6 1994 15:05                                                Page 9
+
+
+   400 00:070D: 2B           .done	pld			;Restore C direc
+                    t page
+   401 00:070E: AB           	plb			;Restore C data bank
+   402                        
+   403 00:070F: 6B           	rtl
+   404                        
+   405                        
+   406                        ;=================================================
+                    =============================
+   407                        	public	~~SoundDownload
+   408                        
+   409                        	LCLSTART
+   410                        
+   411                        	ARGSTART
+   412                        	ARGD	src_p
+   413                        	ARGW	count
+   414                        
+   415                        ~~SoundDownload:
+   416 00:0710: 3B 38 E9 00  	PROLOGUE
+       00:0714: 00 1B 0B 5B 
+   417                        
+   418 00:0718: A6 08        	ldx	<count
+   419 00:071A: A0 00 00     	ldy	#0
+   420                        
+   421 00:071D: E2 20        	SA	;***************
+   422                        
+   423                        ; Download three bytes
+   424                        
+   425 00:071F: 08           .loop	php
+   426 00:0720: 78           	sei
+   427                        
+   428                        ; Make sure the sound CPU is ready
+   429                        
+   430 00:0721: AF 43 21 00  .wait	lda	>SPC700Port3
+   431 00:0725: CD xx xx     	cmp	~~lastcmd
+   432 00:0728: D0 F7        	bne	.wait
+   433                        
+   434 00:072A: C2 20        	LA	;***************
+   435 00:072C: B7 04        	lda	[src_p],y
+   436 00:072E: 8F 40 21 00  	sta	>SPC700Port0
+   437 00:0732: C8           	iny
+   438 00:0733: C8           	iny
+   439 00:0734: E2 20        	SA	;***************
+   440 00:0736: B7 04        	lda	[src_p],y
+   441 00:0738: 8F 42 21 00  	sta	>SPC700Port2
+   442 00:073C: C8           	iny
+   443                        
+   444 00:073D: AD xx xx     	lda	~~driverflag	;Toggle bit
+   445 00:0740: 09 03        	ora	#3		;Download command
+   446 00:0742: 8F 43 21 00  	sta	>SPC700Port3
+   447 00:0746: 8D xx xx     	sta	~~lastcmd	;For receipt checking
+   448 00:0749: AD xx xx     	lda	~~driverflag
+   449 00:074C: 49 80        	eor	#$80
+   450 00:074E: 8D xx xx     	sta	~~driverflag
+   451                        
+   452 00:0751: 28           	plp
+   453                        
+   454 00:0752: CA           	dex
+  Thu Oct  6 1994 15:05                                                Page 10
+
+
+   455 00:0753: D0 CA        	bne	.loop
+   456                        
+   457 00:0755: C2 20        	LA	;***************
+   458 00:0757: A8 A5 02 85  	EPILOGUE		;RTL!
+       00:075B: 08 A5 01 85 
+       00:075F: 07 2B 3B 18 
+       00:0763: 69 06 00 1B 
+       00:0767: 98 6B 
+   459                        
+   460                        
+   461                        ;=================================================
+                    ===================
+   462                        ; This could be considerably faster with unwinding
+   463                        
+   464                        	public	~~Decompress
+   465                        
+   466                        	LCLSTART
+   467                        	LCLW	escapebyte
+   468                        	LCLW	endout
+   469                        	LCLW	outlength
+   470                        	LCLW	matchbits
+   471                        	LCLW	match
+   472                        	LCLW	offset
+   473                        	LCLW	matchmask
+   474                        	LCLW	xtemp
+   475                        	LCLW	ytemp
+   476                        
+   477                        	ARGSTART
+   478                        	ARGD	src_p
+   479                        	ARGD	dest_p
+   480                        
+   481 00:0769: 3B 38 E9 12  ~~Decompress:	PROLOGUE
+       00:076D: 00 1B 0B 5B 
+   482                        
+   483 00:0771: 8B           	phb			;Save data bank
+   484                        
+   485                        ;    outlength = *((unsigned *)src_p)++;
+   486                        ;    escapebyte = *src_p++;
+   487                        ;    matchbits = *src_p++;
+   488                        ;    matchmask = (1<<matchbits)-1;
+   489                        
+   490 00:0772: A7 16        	lda	[src_p]
+   491 00:0774: 85 05        	sta	<outlength
+   492 00:0776: 18           	clc
+   493 00:0777: 65 1A        	adc	<dest_p
+   494 00:0779: 85 03        	sta	<endout
+   495 00:077B: A0 03 00     	ldy	#3
+   496 00:077E: B7 16        	lda	[src_p],y
+   497 00:0780: 29 FF 00     	and	#$FF
+   498 00:0783: 85 07        	sta	<matchbits
+   499 00:0785: 0A           	asl	a
+   500 00:0786: AA           	tax
+   501 00:0787: BF xx xx xx  	lda	>bittable,x
+   502 00:078B: 85 0D        	sta	<matchmask
+   503                        
+   504 00:078D: E2 20        	SA	;***************
+   505                        
+   506 00:078F: A0 02 00     	ldy	#2
+  Thu Oct  6 1994 15:05                                                Page 11
+
+
+   507 00:0792: B7 16        	lda	[src_p],y
+   508 00:0794: 85 01        	sta	<escapebyte
+   509                        
+   510                        ; Decompress
+   511                        
+   512 00:0796: A5 1C        	lda	<dest_p+2
+   513 00:0798: 48           	pha
+   514 00:0799: AB           	plb			;Data bank to destinatio
+                    n
+   515 00:079A: A0 04 00     	ldy	#4		;Y is source offset
+   516 00:079D: A6 1A        	ldx	<dest_p		;X is dest offset
+   517                        
+   518                        ;    if (*src_p == escapebyte)
+   519                        
+   520 00:079F: B7 16        decompress:	lda	[src_p],y
+   521 00:07A1: C8           	iny
+   522 00:07A2: C5 01        	cmp	<escapebyte
+   523 00:07A4: F0 1D        	beq	escapecode
+   524                        
+   525                        ;    *dest_p++ = *src_p++;	// Not compresse
+                    d
+   526                        
+   527 00:07A6: 9D 00 00     storebyte:	sta	!0,x
+   528 00:07A9: E8           	inx
+   529 00:07AA: E4 03        	cpx	<endout
+   530 00:07AC: D0 F1        	bne	decompress
+   531 00:07AE: C2 20        	LA	;***************
+   532 00:07B0: AB           	plb
+   533                        
+   534 00:07B1: A8 A5 14 85  	EPILOGUE		;RTL!
+       00:07B5: 1C A5 13 85 
+       00:07B9: 1B 2B 3B 18 
+       00:07BD: 69 1A 00 1B 
+       00:07C1: 98 6B 
+   535                        
+   536                        	LONGA	OFF	;***************
+   537                        
+   538                        ;    if (!*src_p) {	// Wasted a byte signali
+                    ng the escape char
+   539                        ;       *dest_p++ = escapebyte;
+   540                        ;       src_p++;
+   541                        ;    }
+   542                        
+   543 00:07C3: B7 16        escapecode:	lda	[src_p],y
+   544 00:07C5: D0 06        	bne	repeatrun
+   545 00:07C7: C8           	iny
+   546 00:07C8: A5 01        	lda	<escapebyte
+   547 00:07CA: 4C xx xx     	jmp	storebyte
+   548                        
+   549                        ;    else {		// compressed string
+   550                        ;       compword = *((unsigned *)src_p)++;
+   551                        ;       match = (compword<and>matchmask)+3;
+   552                        ;       offset = compword >> matchbits;
+   553                        ;       memcpy (dest_p, dest_p-offset, match);
+   554                        ;       dest_p += match;
+   555                        ;    }
+   556                        
+   557 00:07CD: 25 0D        repeatrun:	and	<matchmask
+  Thu Oct  6 1994 15:05                                                Page 12
+
+
+   558 00:07CF: 18           	clc
+   559 00:07D0: 69 03        	adc	#3
+   560 00:07D2: 85 09        	sta	<match
+   561                        
+   562 00:07D4: C2 20        	LA	;***************
+   563                        
+   564 00:07D6: B7 16        	lda	[src_p],y
+   565 00:07D8: C8           	iny
+   566 00:07D9: C8           	iny
+   567 00:07DA: 86 0F        	stx	<xtemp
+   568 00:07DC: 84 11        	sty	<ytemp
+   569 00:07DE: A6 07        	ldx	<matchbits
+   570 00:07E0: 4A           shiftloop	lsr	a
+   571 00:07E1: CA           	dex
+   572 00:07E2: D0 FC        	bne	shiftloop
+   573 00:07E4: 85 0B        	sta	<offset
+   574 00:07E6: A6 0F        	ldx	<xtemp
+   575 00:07E8: 8A           	txa
+   576 00:07E9: 38           	sec
+   577 00:07EA: E5 0B        	sbc	<offset
+   578 00:07EC: A8           	tay			;Y is source for repeat
+   579                        
+   580 00:07ED: E2 20        	SA	;***************
+   581                        
+   582 00:07EF: B9 00 00     repeatloop	lda	!0,y
+   583 00:07F2: 9D 00 00     	sta	!0,x
+   584 00:07F5: C8           	iny
+   585 00:07F6: E8           	inx
+   586 00:07F7: C6 09        	dec	<match
+   587 00:07F9: D0 F4        	bne	repeatloop
+   588                        
+   589 00:07FB: A4 11        	ldy	<ytemp
+   590 00:07FD: E4 03        	cpx	<endout
+   591 00:07FF: D0 9E        	bne	decompress
+   592                        
+   593 00:0801: C2 20        	LA	;***************
+   594                        
+   595 00:0803: AB           	plb
+   596                        
+   597 00:0804: A8 A5 14 85  	EPILOGUE		;RTL!
+       00:0808: 1C A5 13 85 
+       00:080C: 1B 2B 3B 18 
+       00:0810: 69 1A 00 1B 
+       00:0814: 98 6B 
+   598                        
+   599                        ;ID has this data in the CODE segment!
+   600                        
+   601 00:0816: 00 00 01 00  bittable:	dw	0,1,3,7,15,31,63,127,255
+       00:081A: 03 00 07 00 
+       00:081E: 0F 00 1F 00 
+       00:0822: 3F 00 7F 00 
+       00:0826: FF 00 
+   602                        
+   603                        
+   604                        	IF	ID_VERSION	;jgt;
+   605                        ;=================================================
+                    ===================
+   606                        ; Input: A,X	Output: A
+  Thu Oct  6 1994 15:05                                                Page 13
+
+
+   607                        
+   608                        ~UMUL2:	cmp	#$100
+   609                        	bge	fullmul
+   610                        	cpx	#$100
+   611                        	bge	fullmul
+   612                        
+   613                        	php
+   614                        
+   615                        	SA	;***************
+   616                        
+   617                        	sei
+   618                        
+   619                        	sta	>MULTA
+   620                        	txa
+   621                        	sta	>MULTB
+   622                        	nop
+   623                        	nop
+   624                        	nop
+   625                        	nop
+   626                        	nop
+   627                        
+   628                        	LA	;***************
+   629                        
+   630                        	lda	>PRODC
+   631                        	plp
+   632                        	rtl
+   633                        
+   634                        fullmul:	jml	~~~MUL2
+   635                        	ENDIF			;jgt;
+   636                        
+   637                        
+   638                        ;=================================================
+                    ===================
+   639                        ; Sets forced blank during a horizontal retrace
+   640                        
+   641 00:0828: 8B           ~~BlankVideo:	phb
+   642 00:0829: F4 00 00     	pea	0
+   643 00:082C: AB           	plb
+   644 00:082D: AB           	plb
+   645                        
+   646 00:082E: E2 30        	SAI	;***************
+   647                        
+   648 00:0830: AF xx xx xx  	lda	>~~fadelevel	;Shadow for INIDISP
+   649 00:0834: 09 80        	ora	#$80		;Set forced black
+   650 00:0836: AA           	tax
+   651 00:0837: AD 12 42     waitnohbl	lda	HVBJOY
+   652 00:083A: 29 40        	and	#$40		;Test for hblank
+   653 00:083C: D0 F9        	bne	waitnohbl
+   654 00:083E: AD 12 42     waithbl	lda	HVBJOY
+   655 00:0841: 29 40        	and	#$40		;Test for hblank
+   656 00:0843: F0 F9        	beq	waithbl
+   657 00:0845: 8E 00 21     	stx	INIDISP		;Forced blank
+   658                        
+   659 00:0848: C2 30        	LAI	;***************
+   660                        
+   661 00:084A: AB           	plb
+   662 00:084B: 6B           	rtl
+   663                        
+  Thu Oct  6 1994 15:05                                                Page 14
+
+
+   664                        
+   665                        ;=================================================
+                    ===================
+   666                        ; Clears forced blank during a horizontal retrace
+   667                        
+   668 00:084C: 8B           ~~UnBlankVideo:	phb
+   669 00:084D: F4 00 00     	pea	0
+   670 00:0850: AB           	plb
+   671 00:0851: AB           	plb
+   672                        
+   673 00:0852: E2 30        	SAI	;***************
+   674                        
+   675 00:0854: AF xx xx xx  	lda	>~~fadelevel	;Shadow for INIDISP
+   676 00:0858: 29 7F        	and	#$7F		;Mask off forced blank
+   677 00:085A: AA           	tax
+   678 00:085B: A9 40        	lda	#$40
+   679 00:085D: 2C 12 42     .waitnohbl	bit	HVBJOY
+   680 00:0860: D0 FB        	bne	.waitnohbl	;Wait for no hblank
+   681 00:0862: 2C 12 42     .waithbl	bit	HVBJOY
+   682 00:0865: F0 FB        	beq	.waithbl	;Wait for hblank
+   683 00:0867: 8E 00 21     	stx	INIDISP		;Release forced blank
+   684                        
+   685 00:086A: C2 30        	LAI	;***************
+   686                        
+   687 00:086C: AB           	plb
+   688 00:086D: 6B           	rtl
+   689                        
+   690                        
+   691                        	IF	ID_VERSION	;jgt;
+   692                        ;=================================================
+                    ===================
+   693                        ; Signed 16-bit by unsigned 8-bit
+   694                        
+   695                        	LCLSTART
+   696                        
+   697                        	ARGSTART
+   698                        	ARGW	v1
+   699                        	ARGW	v2
+   700                        
+   701                        Mul16S8U:	PROLOGUE
+   702                        
+   703                        	lda	<v1
+   704                        	php
+   705                        	bpl	positive
+   706                        	eor	#-1
+   707                        	inc	a
+   708                        	sta	<v1
+   709                        
+   710                        positive:	SA	;***************;*OPTIMIZE: Do t
+                    his better
+   711                        
+   712                        	lda	<v2
+   713                        	sta	>MULTA
+   714                        	lda	<v1+1
+   715                        	sta	>MULTB
+   716                        	nop
+   717                        	nop
+   718                        	nop
+  Thu Oct  6 1994 15:05                                                Page 15
+
+
+   719                        	nop
+   720                        	nop
+   721                        	nop
+   722                        	lda	>PRODC
+   723                        	xba			;Low byte is not signifi
+                    cant
+   724                        	lda	<v1
+   725                        	sta	>MULTB
+   726                        
+   727                        	LA	;***************
+   728                        
+   729                        	and	#$FF00
+   730                        	clc
+   731                        	nop
+   732                        	nop
+   733                        	nop
+   734                        	adc	>PRODC
+   735                        	plp
+   736                        	bpl	positiveans
+   737                        	eor	#-1
+   738                        	inc	a
+   739                        
+   740                        positiveans:	EPILOGUE		;RTL!
+   741                        
+   742                        	
+   743                        ;=================================================
+                    ===================
+   744                        
+   745                        	LCLSTART
+   746                        
+   747                        	ARGSTART
+   748                        	ARGW	v1
+   749                        	ARGW	v2
+   750                        
+   751                        SUFixedDiv:	PROLOGUE
+   752                        
+   753                        	ldx	#8		; right shifts for answe
+                    r
+   754                        
+   755                        	lda	<v1
+   756                        	bne	nonzero
+   757                        
+   758                        	EPILOGUE		;RTL!
+   759                        
+   760                        nonzero:	bpl	checknum
+   761                        	eor	#-1
+   762                        	inc	a
+   763                        checknum	cmp	#$8000
+   764                        	bge	numgood
+   765                        	dex
+   766                        	asl	a
+   767                        	jmp	checknum
+   768                        
+   769                        numgood	sta	>WRDIVD
+   770                        
+   771                        	lda	<v2
+   772                        checkden	cmp	#$100
+   773                        	blt	dengood
+  Thu Oct  6 1994 15:05                                                Page 16
+
+
+   774                        	lsr	a
+   775                        	dex
+   776                        	jmp	checkden
+   777                        
+   778                        dengood	SA	;***************
+   779                        	sta	>WRDIVB
+   780                        	LA	;***************
+   781                        
+   782                        	pha
+   783                        	pla
+   784                        	pha
+   785                        	pla
+   786                        	pha
+   787                        	pla
+   788                        
+   789                        	lda	>RDDIVL
+   790                        
+   791                        	cpx	#0
+   792                        	beq	.done
+   793                        	bmi	.negshift
+   794                        .posshift	asl	a
+   795                        	dex
+   796                        	bne	.posshift
+   797                        	jmp	.done
+   798                        
+   799                        .negshift	lsr	a
+   800                        	inx
+   801                        	bne	.negshift
+   802                        
+   803                        .done	ldx	<v1
+   804                        	bpl	alldone
+   805                        	eor	#-1
+   806                        	inc	a
+   807                        
+   808                        alldone	EPILOGUE		;RTL!
+   809                        
+   810                        	ENDIF			;jgt;
+   811                        
+   812                        
+   813                        ;=================================================
+                    ===================
+   814                        ; Unsigned 16-bit by unsigned 8-bit
+   815                        
+   816                        	public	~~UDiv16by8
+   817                        
+   818                        	LCLSTART
+   819                        
+   820                        	ARGSTART
+   821                        	ARGW	v1
+   822                        	ARGW	v2
+   823                        
+   824 00:086E: 3B 38 E9 00  ~~UDiv16by8:	PROLOGUE
+       00:0872: 00 1B 0B 5B 
+   825                        
+   826 00:0876: A5 04        	lda	<v1
+   827 00:0878: 8F 04 42 00  	sta	>WRDIVD
+   828                        
+   829 00:087C: E2 20        	SA	;***************
+  Thu Oct  6 1994 15:05                                                Page 17
+
+
+   830                        
+   831 00:087E: A5 06        	lda	<v2
+   832 00:0880: 8F 06 42 00  	sta	>WRDIVB
+   833                        
+   834 00:0884: C2 20        	LA	;***************
+   835                        
+   836 00:0886: 48           	pha
+   837 00:0887: 68           	pla
+   838 00:0888: 48           	pha
+   839 00:0889: 68           	pla
+   840 00:088A: 48           	pha
+   841 00:088B: 68           	pla
+   842                        
+   843 00:088C: AF 14 42 00  	lda	>RDDIVL
+   844                        
+   845 00:0890: A8 A5 02 85  	EPILOGUE		;RTL!
+       00:0894: 06 A5 01 85 
+       00:0898: 05 2B 3B 18 
+       00:089C: 69 04 00 1B 
+       00:08A0: 98 6B 
+   846                        
+   847                        
+   848                        ;=================================================
+                    ===================
+   849                        ; Signed 16-bit by unsigned 8-bit
+   850                        
+   851                        	public	~~Div16by8
+   852                        
+   853                        	LCLSTART
+   854                        
+   855                        	ARGSTART
+   856                        	ARGW	v1
+   857                        	ARGW	v2
+   858                        
+   859 00:08A2: 3B 38 E9 00  ~~Div16by8:	PROLOGUE
+       00:08A6: 00 1B 0B 5B 
+   860                        
+   861 00:08AA: A5 04        	lda	<v1
+   862 00:08AC: 10 04        	bpl	notneg
+   863 00:08AE: 49 FF FF     	eor	#-1
+   864 00:08B1: 1A           	inc	a
+   865 00:08B2: 8F 04 42 00  notneg:	sta	>WRDIVD
+   866                        
+   867 00:08B6: E2 20        	SA	;***************
+   868                        
+   869 00:08B8: A5 06        	lda	<v2
+   870 00:08BA: 8F 06 42 00  	sta	>WRDIVB
+   871                        
+   872 00:08BE: C2 20        	LA	;***************
+   873                        
+   874 00:08C0: 48           	pha
+   875 00:08C1: 68           	pla
+   876 00:08C2: 48           	pha
+   877 00:08C3: 68           	pla
+   878 00:08C4: 48           	pha
+   879 00:08C5: 68           	pla
+   880 00:08C6: 48           	pha
+   881 00:08C7: 68           	pla
+  Thu Oct  6 1994 15:05                                                Page 18
+
+
+   882                        
+   883 00:08C8: AF 14 42 00  	lda	>RDDIVL
+   884 00:08CC: 24 04        	bit	<v1
+   885 00:08CE: 10 04        	bpl	notneg2
+   886 00:08D0: 49 FF FF     	eor	#-1
+   887 00:08D3: 1A           	inc	a
+   888                        
+   889 00:08D4: A8 A5 02 85  notneg2	EPILOGUE		;RTL!
+       00:08D8: 06 A5 01 85 
+       00:08DC: 05 2B 3B 18 
+       00:08E0: 69 04 00 1B 
+       00:08E4: 98 6B 
+   890                        
+   891                        
+   892                        ;=================================================
+                    ===================
+   893                        ; Merges src1/size1 and src2/size2 to dest
+   894                        ; The pointers must be updated before exiting
+   895                        
+   896                        	extern	~~src1
+   897                        	extern	~~size1
+   898                        	extern	~~src2
+   899                        	extern	~~size2
+   900                        	extern	~~dest
+   901                        
+   902                        	public	~~Merge
+   903                        
+   904                        	LCLSTART
+   905                        	LCLW	lsrc1
+   906                        	LCLW	lsrc2
+   907                        	LCLW	ldest
+   908                        
+   909                        	ARGSTART		;NO ARGUMENTS!
+   910                        
+   911 00:08E6: 3B 38 E9 06  ~~Merge:	PROLOGUE
+       00:08EA: 00 1B 0B 5B 
+   912                        
+   913 00:08EE: AD xx xx     	lda	~~src1
+   914 00:08F1: 85 01        	sta	<lsrc1
+   915 00:08F3: AD xx xx     	lda	~~src2
+   916 00:08F6: 85 03        	sta	<lsrc2
+   917 00:08F8: AD xx xx     	lda	~~dest
+   918 00:08FB: 85 05        	sta	<ldest
+   919                        
+   920 00:08FD: A0 00 00     	ldy	#0		;Y is used for dest step
+                    ping
+   921                        
+   922 00:0900: B2 01        	lda	(lsrc1)
+   923 00:0902: D2 03        	cmp	(lsrc2)
+   924 00:0904: B0 13        	bge	mergefrom2	;if (*src1 > *src2)
+   925                        	
+   926                        ; A always holds (l~~src1) here
+   927                        
+   928 00:0906: E6 01        mergefrom1:	inc	<lsrc1
+   929 00:0908: E6 01        	inc	<lsrc1
+   930 00:090A: 91 05        	sta	(ldest),y
+   931 00:090C: C8           	iny
+   932 00:090D: C8           	iny			;*dest++ = *src1++;
+  Thu Oct  6 1994 15:05                                                Page 19
+
+
+   933                        
+   934 00:090E: CE xx xx     	dec	~~size1
+   935 00:0911: F0 1E        	beq	finishfrom2
+   936                        
+   937 00:0913: B2 01        	lda	(lsrc1)
+   938 00:0915: D2 03        	cmp	(lsrc2)
+   939 00:0917: 90 ED        	blt	mergefrom1	;if (*src1 > *src2)
+   940                        	
+   941 00:0919: B2 03        mergefrom2:	lda	(lsrc2)
+   942 00:091B: E6 03        	inc	<lsrc2
+   943 00:091D: E6 03        	inc	<lsrc2
+   944 00:091F: 91 05        	sta	(ldest),y
+   945 00:0921: C8           	iny
+   946 00:0922: C8           	iny			;*dest++ = *src2++;
+   947                        
+   948 00:0923: CE xx xx     	dec	~~size2
+   949 00:0926: F0 1B        	beq	finishfrom1
+   950                        
+   951 00:0928: B2 01        	lda	(lsrc1)
+   952 00:092A: D2 03        	cmp	(lsrc2)
+   953 00:092C: 90 D8        	blt	mergefrom1	;if (*src1 > *src2)
+   954                        
+   955 00:092E: 4C xx xx     	jmp	mergefrom2
+   956                        
+   957 00:0931: B2 03        finishfrom2:	lda	(lsrc2)
+   958 00:0933: E6 03        	inc	<lsrc2
+   959 00:0935: E6 03        	inc	<lsrc2
+   960 00:0937: 91 05        	sta	(ldest),y
+   961 00:0939: C8           	iny
+   962 00:093A: C8           	iny			;*dest++ = *src2++;
+   963 00:093B: CE xx xx     	dec	~~size2
+   964 00:093E: D0 F1        	bne	finishfrom2
+   965 00:0940: 4C xx xx     	jmp	finished
+   966                        
+   967 00:0943: B2 01        finishfrom1:	lda	(lsrc1)
+   968 00:0945: E6 01        	inc	<lsrc1
+   969 00:0947: E6 01        	inc	<lsrc1
+   970 00:0949: 91 05        	sta	(ldest),y
+   971 00:094B: C8           	iny
+   972 00:094C: C8           	iny			;*dest++ = *src1++;
+   973 00:094D: CE xx xx     	dec	~~size1
+   974 00:0950: D0 F1        	bne	finishfrom1
+   975                        
+   976 00:0952: A5 01        finished:	lda	<lsrc1
+   977 00:0954: 8D xx xx     	sta	~~src1
+   978 00:0957: A5 03        	lda	<lsrc2
+   979 00:0959: 8D xx xx     	sta	~~src2
+   980 00:095C: 98           	tya
+   981 00:095D: 18           	clc
+   982 00:095E: 65 05        	adc	<ldest
+   983 00:0960: 8D xx xx     	sta	~~dest
+   984                        
+   985 00:0963: A8 A5 08 85  	EPILOGUE
+       00:0967: 08 A5 07 85 
+       00:096B: 07 2B 3B 18 
+       00:096F: 69 06 00 1B 
+       00:0973: 98 6B 
+   986                        
+  Thu Oct  6 1994 15:05                                                Page 20
+
+
+   987                        
+   988                        ;=================================================
+                    ===================
+   989                        
+   990                        	public	~~R_TransformZ
+   991                        
+   992                        	public	~~viewsin
+   993                        	public	~~absviewsin
+   994                        	public	~~viewcos
+   995                        	public	~~absviewcos
+   996                        
+   997                        	extern	~~trx
+   998                        	extern	~~try
+   999                        
+  1000                        ;---------------------------------------
+  1001                        
+  1002                        	public	~~transdp
+  1003                        
+  1004                        	page0		;Use zero-page for local variabl
+                    es
+  1005             00000000   ~~transdp	equ	$0000	;Use DP = $0000 to acces
+                    s zero-page
+  1006                        
+  1007 00:0000:              ~~viewsin	dw	0
+  1008 00:0002:              ~~absviewsin	dw	0
+  1009 00:0004:              ~~viewcos	dw	0
+  1010 00:0006:              ~~absviewcos	dw	0
+  1011                        
+  1012 00:0008:              abstrx	dw	0
+  1013 00:000A:              abstry	dw	0
+  1014 00:000C:              gxt	dw	0
+  1015 00:000E:              gyt	dw	0
+  1016                        
+  1017 00:0010:              	ends
+  1018                        
+  1019                        ;---------------------------------------
+  1020                        
+  1021                        
+  1022 00:0975: 0B           ~~R_TransformZ:	phd			;Save di
+                    rect page
+  1023 00:0976: A9 00 00     	lda	#~~transdp	;Use private dpage
+  1024 00:0979: 5B           	tcd
+  1025                        
+  1026 00:097A: 8B           	phb			;Save data bank
+  1027 00:097B: F4 00 00     	pea	$0
+  1028 00:097E: AB           	plb			;Set data bank for hardw
+                    are
+  1029 00:097F: AB           	plb
+  1030                        
+  1031                        ;---------------------------------------
+  1032                        ; Get absolute values for ~~trx/~~try
+  1033                        ;---------------------------------------
+  1034                        
+  1035 00:0980: AF xx xx xx  	lda	>~~trx
+  1036 00:0984: 10 04        	bpl	gotabstrx
+  1037 00:0986: 49 FF FF     	eor	#-1
+  1038 00:0989: 1A           	inc	a
+  1039 00:098A: 85 xx        gotabstrx	sta	abstrx
+  Thu Oct  6 1994 15:05                                                Page 21
+
+
+  1040                        
+  1041 00:098C: AF xx xx xx  	lda	>~~try
+  1042 00:0990: 10 04        	bpl	gotabstry
+  1043 00:0992: 49 FF FF     	eor	#-1
+  1044 00:0995: 1A           	inc	a
+  1045 00:0996: 85 xx        gotabstry	sta	<abstry
+  1046                        
+  1047 00:0998: E2 10        	SI	;***************
+  1048                        
+  1049                        ;---------------------------------------
+  1050                        ;   gxt = ~~trx * ~~viewcos
+  1051                        ;---------------------------------------
+  1052                        
+  1053 00:099A: A6 xx        	ldx	<~~absviewcos
+  1054 00:099C: 8E 02 42     	stx	MULTA
+  1055 00:099F: A4 xx        	ldy	<abstrx
+  1056 00:09A1: 8C 03 42     	sty	MULTB		;Start first multiply
+  1057 00:09A4: A4 xx        	ldy	<abstrx+1
+  1058 00:09A6: 48           	pha
+  1059 00:09A7: 68           	pla
+  1060 00:09A8: AD 16 42     	lda	PRODC		;Get first answer
+  1061 00:09AB: 8C 03 42     	sty	MULTB		;Start second multiply
+  1062 00:09AE: EB           	xba
+  1063 00:09AF: 29 FF 00     	and	#$FF		;Only low byte significa
+                    nt
+  1064 00:09B2: 18           	clc
+  1065 00:09B3: EA           	nop
+  1066 00:09B4: EA           	nop
+  1067 00:09B5: EA           	nop
+  1068 00:09B6: 6D 16 42     	adc	PRODC		;Get second answer
+  1069 00:09B9: 85 xx        	sta	<gxt
+  1070                        
+  1071 00:09BB: AF xx xx xx  	lda	>~~trx		;Calculate sign
+  1072 00:09BF: 45 xx        	eor	<~~viewcos
+  1073 00:09C1: 10 08        	bpl	.gxtpos
+  1074 00:09C3: A5 xx        	lda	<gxt
+  1075 00:09C5: 49 FF FF     	eor	#-1
+  1076 00:09C8: 1A           	inc	a
+  1077 00:09C9: 85 xx        	sta	<gxt
+  1078                        
+  1079                        ;---------------------------------------
+  1080                        ;   gyt = ~~try * ~~viewsin;
+  1081                        ;---------------------------------------
+  1082                        
+  1083 00:09CB: A6 xx        .gxtpos	ldx	<~~absviewsin
+  1084 00:09CD: 8E 02 42     	stx	MULTA
+  1085 00:09D0: A4 xx        	ldy	<abstry
+  1086 00:09D2: 8C 03 42     	sty	MULTB		;Start first multiply
+  1087 00:09D5: A4 xx        	ldy	<abstry+1
+  1088 00:09D7: 48           	pha
+  1089 00:09D8: 68           	pla
+  1090 00:09D9: AD 16 42     	lda	PRODC		;Get first answer
+  1091 00:09DC: 8C 03 42     	sty	MULTB		;Start second multiply
+  1092 00:09DF: EB           	xba
+  1093 00:09E0: 29 FF 00     	and	#$FF		;Only low byte significa
+                    nt
+  1094 00:09E3: 18           	clc
+  1095 00:09E4: EA           	nop
+  Thu Oct  6 1994 15:05                                                Page 22
+
+
+  1096 00:09E5: EA           	nop
+  1097 00:09E6: EA           	nop
+  1098 00:09E7: 6D 16 42     	adc	PRODC		;Get second answer
+  1099 00:09EA: 85 xx        	sta	<gyt
+  1100                        
+  1101 00:09EC: AF xx xx xx  	lda	>~~try		;Calculate sign
+  1102 00:09F0: 45 xx        	eor	<~~viewsin
+  1103 00:09F2: 10 08        	bpl	.gytpos
+  1104 00:09F4: A5 xx        	lda	<gyt
+  1105 00:09F6: 49 FF FF     	eor	#-1
+  1106 00:09F9: 1A           	inc	a
+  1107 00:09FA: 85 xx        	sta	<gyt
+  1108                        
+  1109                        ;---------------------------------------
+  1110                        ;   return gxt + gyt;
+  1111                        ;---------------------------------------
+  1112                        
+  1113 00:09FC: C2 10        .gytpos	LI	;***************
+  1114                        
+  1115 00:09FE: A5 xx        	lda	<gxt
+  1116 00:0A00: 18           	clc
+  1117 00:0A01: 65 xx        	adc	<gyt
+  1118                        
+  1119 00:0A03: AB           	plb
+  1120 00:0A04: 2B           	pld
+  1121                        
+  1122 00:0A05: 6B           	rtl
+  1123                        
+  1124                        
+  1125                        ;=================================================
+                    ===================
+  1126                        ; R_TransformZ MUST have been called first
+  1127                        ;	gxt = FixedByFrac(~~trx,~~viewsin);
+  1128                        ;	gyt = FixedByFrac(~~try,~~viewcos);
+  1129                        ;	return  gxt - gyt;
+  1130                        
+  1131                        	public	~~R_TransformX
+  1132                        
+  1133 00:0A06: 0B           ~~R_TransformX:	phd			;Save di
+                    rect page
+  1134 00:0A07: A9 00 00     	lda	#~~transdp	;Use private dpage
+  1135 00:0A0A: 5B           	tcd
+  1136                        
+  1137 00:0A0B: 8B           	phb			;Save data bank
+  1138 00:0A0C: F4 00 00     	pea	$0
+  1139 00:0A0F: AB           	plb			;Set data bank for hardw
+                    are
+  1140 00:0A10: AB           	plb
+  1141                        
+  1142 00:0A11: E2 10        	SI	;***************
+  1143                        
+  1144                        ;---------------------------------------
+  1145                        ; gxt = ~~trx * ~~viewsin
+  1146                        ;---------------------------------------
+  1147                        
+  1148 00:0A13: A6 xx        	ldx	<~~absviewsin
+  1149 00:0A15: 8E 02 42     	stx	MULTA
+  1150 00:0A18: A4 xx        	ldy	<abstrx
+  Thu Oct  6 1994 15:05                                                Page 23
+
+
+  1151 00:0A1A: 8C 03 42     	sty	MULTB		;Start first multiply
+  1152 00:0A1D: A4 xx        	ldy	<abstrx+1
+  1153 00:0A1F: 48           	pha
+  1154 00:0A20: 68           	pla
+  1155 00:0A21: AD 16 42     	lda	PRODC		;Get first answer
+  1156 00:0A24: 8C 03 42     	sty	MULTB		;Start second multiply
+  1157 00:0A27: EB           	xba
+  1158 00:0A28: 29 FF 00     	and	#$FF		;Only low byte significa
+                    nt
+  1159 00:0A2B: 18           	clc
+  1160 00:0A2C: EA           	nop
+  1161 00:0A2D: EA           	nop
+  1162 00:0A2E: EA           	nop
+  1163 00:0A2F: 6D 16 42     	adc	PRODC		;Get second answer
+  1164 00:0A32: 85 xx        	sta	<gxt
+  1165                        
+  1166 00:0A34: AF xx xx xx  	lda	>~~trx		;Calculate sign
+  1167 00:0A38: 45 xx        	eor	<~~viewsin
+  1168 00:0A3A: 10 08        	bpl	.gxtpos
+  1169 00:0A3C: A5 xx        	lda	<gxt
+  1170 00:0A3E: 49 FF FF     	eor	#-1
+  1171 00:0A41: 1A           	inc	a
+  1172 00:0A42: 85 xx        	sta	<gxt
+  1173                        
+  1174                        ;---------------------------------------
+  1175                        ; gyt = ~~try * ~~viewcos
+  1176                        ;---------------------------------------
+  1177                        
+  1178 00:0A44: A6 xx        .gxtpos	ldx	<~~absviewcos
+  1179 00:0A46: 8E 02 42     	stx	MULTA
+  1180 00:0A49: A4 xx        	ldy	<abstry
+  1181 00:0A4B: 8C 03 42     	sty	MULTB		;Start first multiply
+  1182 00:0A4E: A4 xx        	ldy	<abstry+1
+  1183 00:0A50: 48           	pha
+  1184 00:0A51: 68           	pla
+  1185 00:0A52: AD 16 42     	lda	PRODC		;Get first answer
+  1186 00:0A55: 8C 03 42     	sty	MULTB		;Start second multiply
+  1187 00:0A58: EB           	xba
+  1188 00:0A59: 29 FF 00     	and	#$FF		;Only low byte significa
+                    nt
+  1189 00:0A5C: 18           	clc
+  1190 00:0A5D: EA           	nop
+  1191 00:0A5E: EA           	nop
+  1192 00:0A5F: EA           	nop
+  1193 00:0A60: 6D 16 42     	adc	PRODC		;Get second answer
+  1194 00:0A63: 85 xx        	sta	<gyt
+  1195                        
+  1196 00:0A65: AF xx xx xx  	lda	>~~try		;Calculate sign
+  1197 00:0A69: 45 xx        	eor	<~~viewcos
+  1198 00:0A6B: 10 08        	bpl	.gytpos
+  1199 00:0A6D: A5 xx        	lda	<gyt
+  1200 00:0A6F: 49 FF FF     	eor	#-1
+  1201 00:0A72: 1A           	inc	a
+  1202 00:0A73: 85 xx        	sta	<gyt
+  1203                        
+  1204                        ;---------------------------------------
+  1205                        ; return gxt - gyt
+  1206                        ;---------------------------------------
+  Thu Oct  6 1994 15:05                                                Page 24
+
+
+  1207                        
+  1208 00:0A75: C2 10        .gytpos	LI	;***************
+  1209                        
+  1210 00:0A77: A5 xx        	lda	<gxt
+  1211 00:0A79: 38           	sec
+  1212 00:0A7A: E5 xx        	sbc	<gyt
+  1213                        
+  1214 00:0A7C: AB           	plb
+  1215 00:0A7D: 2B           	pld
+  1216                        
+  1217 00:0A7E: 6B           	rtl
+  1218                        
+  1219                        
+  1220                        
+  1221                        ;=================================================
+                    ===================
+  1222                        ; Fill memory with a constant
+  1223                        
+  1224                        	IF	0
+  1225                        
+  1226                        w_memset	
+  1227                        	DUM	1	;Local record
+  1228                        RTLVal	BLOCK	3	;Return address
+  1229                        dest	LONG		;Pointer to memory
+  1230                        fill	WORD		;Byte to fill with
+  1231                        size	WORD		;Number of bytes to fill
+  1232                        EndDirect DSectSize	;Return here
+  1233                        	DEND
+  1234                        
+  1235                        			TSC
+  1236                        	PHD		;Make my stack frame
+  1237                        	TCD
+  1238                        	SEP	#$20
+  1239                        	LDA	fill	;Get the fill char
+  1240                        	LDY	size	;No bytes to fill?
+  1241                        	BEQ	Exit	;Exit now
+  1242                        	DEY		;-1
+  1243                        	BEQ	EndLoop	;Only one
+  1244                        Loop	STA	[dest],Y	;Fill memory
+  1245                        	DEY		;Count down
+  1246                        	BNE	Loop
+  1247                        EndLoop	STA	[dest]	;Save the last byte
+  1248                        Exit	REP	#$21
+  1249                        	PLD
+  1250                        	LDA	#RTLVal+1,S	;Get the return address
+  1251                        	STA	#RTLVal+8+1,S
+  1252                        	PLA
+  1253                        	STA	#RTLVal+8-2,S
+  1254                        	TSC
+  1255                        	CLC
+  1256                        	ADC	#8-2
+  1257                        	TCS
+  1258                        	RTL		;Exit with new value..
+  1259                        	END
+  1260                        
+  1261                        w_memcpy	
+  1262                        	DUM	1	;Local record
+  1263                        RTLVal	BLOCK	3	;Return address
+  Thu Oct  6 1994 15:05                                                Page 25
+
+
+  1264                        dest	LONG		;Pointer to memory
+  1265                        source	LONG		;Byte to fill with
+  1266                        size	WORD		;Number of bytes to fill
+  1267                        EndDirect DSectSize	;Return here
+  1268                        	DEND
+  1269                        
+  1270                        			TSC
+  1271                        	PHD		;Make my stack frame
+  1272                        	TCD
+  1273                        	SEP	#$20
+  1274                        	LDY	size	;No bytes to fill?
+  1275                        	BEQ	Exit	;Exit now
+  1276                        	DEY		;-1
+  1277                        	BEQ	EndLoop	;Only one
+  1278                        Loop	LDA	[source],Y
+  1279                        	STA	[dest],Y	;Fill memory
+  1280                        	DEY		;Count down
+  1281                        	BNE	Loop
+  1282                        EndLoop  LDA	[source]
+  1283                        	STA	[dest]	;Save the last byte
+  1284                        Exit	REP	#$21
+  1285                        	PLD
+  1286                        	LDA	#RTLVal+1,S
+  1287                        	STA	#RTLVal+1+10,S
+  1288                        	PLA
+  1289                        	STA	#RTLVal+10-2,S	;Remove the excess
+  1290                        	TSC
+  1291                        	ADC	#10-2
+  1292                        	TCS
+  1293                        	RTL		;Exit with new value..
+  1294                        	END
+  1295                        
+  1296                        w_rnd	
+  1297                        	LDA	#1
+  1298                        	RTL
+  1299                        	END
+  1300                        
+  1301                        w_abs	
+  1302                        	DUM	1	;Local record
+  1303                        RTLVal	BLOCK	3	;Return address
+  1304                        Value	WORD		;Value to convert
+  1305                        EndDirect DSectSize	;Return here
+  1306                        	DEND
+  1307                        
+  1308                        	LDA	Value,S	;Get value to test
+  1309                        	BPL	Use
+  1310                        	EOR	#-1	;Negate it
+  1311                        	INC	A
+  1312                        Use	TAX		;Save answer in X
+  1313                        	LDA	#RTLVal+1,S	;Only one word to remove
+  1314                        	STA	#RTLVal+3,S
+  1315                        	PLA
+  1316                        	STA	#RTLVal,S	;Remove the excess
+  1317                        	TXA
+  1318                        	RTL
+  1319                        
+  1320                        	end
+  1321                        
+  Thu Oct  6 1994 15:05                                                Page 26
+
+
+  1322                        	ENDIF
+  1323                        
+  1324                        
+  1325                        ;=================================================
+                    ===================
+  1326                        ; fixed_t FixedByFrac (fixed_t Val1, fixed_t Val2)
+  1327                        ; * Mul a signed fixed by a frac *
+  1328                        ;
+  1329                        
+  1330                        	public	~~FixedByFrac
+  1331                        
+  1332                        	LCLSTART
+  1333                        
+  1334                        	ARGSTART
+  1335                        	ARGW	Val1		;Value to convert
+  1336                        	ARGW	Val2		;Value to convert
+  1337                        
+  1338 00:0A7F: 3B 38 E9 00  ~~FixedByFrac:	PROLOGUE
+       00:0A83: 00 1B 0B 5B 
+  1339                        
+  1340 00:0A87: 8B           	phb			;Save data bank
+  1341 00:0A88: F4 00 00     	pea	$0000		;Set bank to hardware
+  1342 00:0A8B: AB           	plb
+  1343 00:0A8C: AB           	plb
+  1344 00:0A8D: A5 04        	lda	<Val1		;Get the sign of the mul
+  1345 00:0A8F: 45 06        	eor	<Val2
+  1346 00:0A91: 08           	php			;Save the sign
+  1347 00:0A92: A5 04        	lda	<Val1		;Absolute value of #1
+  1348 00:0A94: 10 06        	bpl	.Val1Ok
+  1349 00:0A96: 49 FF FF     	eor	#-1
+  1350 00:0A99: 1A           	inc	a
+  1351 00:0A9A: 85 04        	sta	<Val1
+  1352 00:0A9C: A8           .Val1Ok	tay
+  1353 00:0A9D: A5 06        	lda	<Val2		;Absolute value of #2
+  1354 00:0A9F: 10 06        	bpl	.Val2Ok
+  1355 00:0AA1: 49 FF FF     	eor	#-1
+  1356 00:0AA4: 1A           	inc	a
+  1357 00:0AA5: 85 06        	sta	<Val2
+  1358                        
+  1359                        ;---------------------------------------
+  1360                        ; Mul by Val1+0
+  1361                        ;---------------------------------------
+  1362                        
+  1363 00:0AA7: AA           .Val2Ok	tax			;X = Val2
+  1364 00:0AA8: E2 10        	SI	;***************
+  1365 00:0AAA: 8E 02 42     	stx	MULTA		;Val1 * Val2
+  1366 00:0AAD: 8C 03 42     	sty	MULTB		;Save the mul value
+  1367 00:0AB0: A4 05        	ldy	<Val1+1		;Get Val2+1
+  1368 00:0AB2: 48           	pha
+  1369 00:0AB3: 68           	pla
+  1370 00:0AB4: AD 17 42     	lda	PRODC+1		;Get the answer
+  1371 00:0AB7: 8C 03 42     	sty	MULTB		;Val1+1 * Val2+1
+  1372 00:0ABA: 29 FF 00     	and	#$FF		;Mask for byte
+  1373 00:0ABD: 18           	clc
+  1374 00:0ABE: 48           	pha
+  1375 00:0ABF: 68           	pla
+  1376 00:0AC0: 6D 16 42     	adc	PRODC
+  1377 00:0AC3: A2 00        	ldx	#0
+  Thu Oct  6 1994 15:05                                                Page 27
+
+
+  1378 00:0AC5: 28           	plp			;Restore MX and sign
+  1379 00:0AC6: C2 10        	LI	;***************
+  1380 00:0AC8: 10 05        	bpl	.NoUnNeg
+  1381 00:0ACA: 49 FF FF     	eor	#-1		;Negate it
+  1382 00:0ACD: 1A           	inc	a
+  1383 00:0ACE: CA           	dex
+  1384 00:0ACF: A8           .NoUnNeg	tay			;Use index
+  1385 00:0AD0: AB           	plb			;Restore data bank
+  1386 00:0AD1: 98           	tya
+  1387                        
+  1388 00:0AD2: A8 A5 02 85  	EPILOGUE		;RTL!
+       00:0AD6: 06 A5 01 85 
+       00:0ADA: 05 2B 3B 18 
+       00:0ADE: 69 04 00 1B 
+       00:0AE2: 98 6B 
+  1389                        
+  1390                        
+  1391                        ;=================================================
+                    ===================
+  1392                        ; fixed_t FixedMul (fixed_t Val1, fixed_t Val2)
+  1393                        ; * Mul a signed fixed by a signed fixed *
+  1394                        ;
+  1395                        
+  1396                        	public	~~FixedMul
+  1397                        
+  1398                        	LCLSTART
+  1399                        	LCLD	Answer
+  1400                        
+  1401                        	ARGSTART
+  1402                        	ARGW	Val1		;Value to convert
+  1403                        	ARGW	Val2		;Value to convert
+  1404                        
+  1405 00:0AE4: 3B 38 E9 04  ~~FixedMul:	PROLOGUE
+       00:0AE8: 00 1B 0B 5B 
+  1406                        
+  1407 00:0AEC: 8B           	phb			;Save data bank
+  1408 00:0AED: F4 00 00     	pea	$0000		;Set bank to hardware
+  1409 00:0AF0: AB           	plb
+  1410 00:0AF1: AB           	plb
+  1411 00:0AF2: A5 08        	lda	<Val1		;Get the sign of the mul
+  1412 00:0AF4: 45 0A        	eor	<Val2
+  1413 00:0AF6: 08           	php			;Save the sign
+  1414 00:0AF7: A5 08        	lda	<Val1		;Absolute value of #1
+  1415 00:0AF9: 10 06        	bpl	.Val1Ok
+  1416 00:0AFB: 49 FF FF     	eor	#-1
+  1417 00:0AFE: 1A           	inc	a
+  1418 00:0AFF: 85 08        	sta	<Val1
+  1419                        
+  1420 00:0B01: A5 0A        .Val1Ok	lda	<Val2		;Absolute value 
+                    of #2
+  1421 00:0B03: 10 06        	bpl	.Val2Ok
+  1422 00:0B05: 49 FF FF     	eor	#-1
+  1423 00:0B08: 1A           	inc	a
+  1424 00:0B09: 85 0A        	sta	<Val2
+  1425                        
+  1426                        ;---------------------------------------
+  1427                        ; Mul by Val1+0
+  1428                        ;---------------------------------------
+  Thu Oct  6 1994 15:05                                                Page 28
+
+
+  1429                        
+  1430 00:0B0B: AA           .Val2Ok	tax			;X = Val2
+  1431 00:0B0C: E2 10        	SI	;***************
+  1432                        *	ldx	<Val2		;Zero?
+  1433 00:0B0E: 8E 02 42     	stx	MULTA		;Val1 * Val2
+  1434 00:0B11: A4 08        	ldy	<Val1
+  1435 00:0B13: 8C 03 42     	sty	MULTB		;Save the mul value
+  1436 00:0B16: A6 0B        	ldx	<Val2+1		;Get High * High
+  1437 00:0B18: A4 09        	ldy	<Val1+1
+  1438 00:0B1A: 48           	pha
+  1439 00:0B1B: 68           	pla
+  1440 00:0B1C: AD 16 42     	lda	PRODC		;Get the answer
+  1441 00:0B1F: 8E 02 42     	stx	MULTA		;Start the next mul
+  1442 00:0B22: 8C 03 42     	sty	MULTB		;Val1+1 * Val2+1
+  1443 00:0B25: 85 01        	sta	<Answer		;Save low word of the an
+                    swer
+  1444                        
+  1445 00:0B27: A6 08        	ldx	<Val1		;Low byte
+  1446 00:0B29: 18           	clc
+  1447 00:0B2A: 48           	pha
+  1448 00:0B2B: 68           	pla
+  1449 00:0B2C: AD 16 42     	lda	PRODC		;Get the answer
+  1450 00:0B2F: 8E 03 42     	stx	MULTB		;Val2+1 * Val1
+  1451 00:0B32: 85 03        	sta	<Answer+2	;Save as high word
+  1452                        
+  1453 00:0B34: A6 0A        	ldx	<Val2
+  1454 00:0B36: 48           	pha
+  1455 00:0B37: 68           	pla
+  1456 00:0B38: AE 16 42     	ldx	PRODC
+  1457 00:0B3B: 8E 02 42     	stx	MULTA
+  1458 00:0B3E: 8C 03 42     	sty	MULTB		;Val2 * Val+1
+  1459 00:0B41: 48           	pha
+  1460 00:0B42: 68           	pla
+  1461 00:0B43: 65 02        	adc	<Answer+1	;Add into answer
+  1462                        *	bcc	.NoInc
+  1463                        *	inc	<Answer+3	;Inc high byte
+  1464 00:0B45: 18           	clc			;Reset carry
+  1465 00:0B46: 48           .NoInc	pha
+  1466 00:0B47: 68           	pla
+  1467 00:0B48: 6D 16 42     	adc	PRODC		;Get answer again
+  1468                        *	sta	<Answer+1	;Save result
+  1469                        *	bcc	.NoInc2
+  1470                        *	inc	<Answer+3
+  1471 00:0B4B: A2 00        .NoInc2	ldx	#0
+  1472 00:0B4D: 68           	pla			;Restore MX and sign
+  1473 00:0B4E: C2 10        	LI	;***************
+  1474 00:0B50: 10 05        	bpl	.NoUnNeg
+  1475 00:0B52: 49 FF FF     	eor	#-1		;Negate it
+  1476 00:0B55: 1A           	inc	a		;Inc
+  1477 00:0B56: CA           	dex
+  1478 00:0B57: AB           .NoUnNeg	plb			;Restore the ban
+                    k
+  1479                        
+  1480 00:0B58: A8 A5 06 85  	EPILOGUE		;RTL!
+       00:0B5C: 0A A5 05 85 
+       00:0B60: 09 2B 3B 18 
+       00:0B64: 69 08 00 1B 
+       00:0B68: 98 6B 
+  Thu Oct  6 1994 15:05                                                Page 29
+
+
+  1481                        
+  1482                        
+  1483                        ;=================================================
+                    ===================
+  1484                        ; fixed_t SUFixedMul (fixed_t Val1, fixed_t Val2)
+  1485                        ; * Signed * an unsigned value *
+  1486                        ;
+  1487                        
+  1488                        	public	~~SUFixedMul
+  1489                        
+  1490                        	LCLSTART
+  1491                        	LCLD	Answer
+  1492                        
+  1493                        	ARGSTART
+  1494                        	ARGW	Val1		;Value to convert
+  1495                        	ARGW	Val2		;Value to convert
+  1496                        
+  1497 00:0B6A: 3B 38 E9 04  ~~SUFixedMul:	PROLOGUE
+       00:0B6E: 00 1B 0B 5B 
+  1498                        
+  1499 00:0B72: 8B           	phb			;Save data bank
+  1500 00:0B73: F4 00 00     	pea	$0000		;Set bank to hardware
+  1501 00:0B76: AB           	plb
+  1502 00:0B77: AB           	plb
+  1503 00:0B78: A5 08        	lda	<Val1		;Get the sign of the mul
+  1504 00:0B7A: 08           	php
+  1505 00:0B7B: 10 06        	bpl	.Val1Ok
+  1506 00:0B7D: 49 FF FF     	eor	#-1
+  1507 00:0B80: 1A           	inc	a
+  1508 00:0B81: 85 08        	sta	<Val1
+  1509                        
+  1510                        ;---------------------------------------
+  1511                        ; Mul by Val1+0
+  1512                        ;---------------------------------------
+  1513                        
+  1514 00:0B83: E2 10        .Val1Ok	SI	;***************
+  1515 00:0B85: A6 0A        	ldx	<Val2		;Zero?
+  1516 00:0B87: 8E 02 42     	stx	MULTA		;Val1 * Val2
+  1517 00:0B8A: A4 08        	ldy	<Val1
+  1518 00:0B8C: 8C 03 42     	sty	MULTB		;Save the mul value
+  1519 00:0B8F: A6 0B        	ldx	<Val2+1		;Get High * High
+  1520 00:0B91: A4 09        	ldy	<Val1+1
+  1521 00:0B93: 48           	pha
+  1522 00:0B94: 68           	pla
+  1523 00:0B95: AD 16 42     	lda	PRODC		;Get the answer
+  1524 00:0B98: 8E 02 42     	stx	MULTA		;Start the next mul
+  1525 00:0B9B: 8C 03 42     	sty	MULTB		;Val1+1 * Val2+1
+  1526 00:0B9E: 85 01        	sta	<Answer		;Save low word of the an
+                    swer
+  1527                        
+  1528 00:0BA0: A6 08        	ldx	<Val1		;Low byte
+  1529 00:0BA2: 18           	clc
+  1530 00:0BA3: 48           	pha
+  1531 00:0BA4: 68           	pla
+  1532 00:0BA5: AD 16 42     	lda	PRODC		;Get the answer
+  1533 00:0BA8: 8E 03 42     	stx	MULTB		;Val2+1 * Val1
+  1534 00:0BAB: 85 03        	sta	<Answer+2	;Save as high word
+  1535                        
+  Thu Oct  6 1994 15:05                                                Page 30
+
+
+  1536 00:0BAD: A6 0A        	ldx	<Val2
+  1537 00:0BAF: 48           	pha
+  1538 00:0BB0: 68           	pla
+  1539 00:0BB1: AD 16 42     	lda	PRODC
+  1540 00:0BB4: 8E 02 42     	stx	MULTA
+  1541 00:0BB7: 8C 03 42     	sty	MULTB		;Val2 * Val+1
+  1542 00:0BBA: 48           	pha
+  1543 00:0BBB: 68           	pla
+  1544 00:0BBC: 65 02        	adc	<Answer+1	;Add into answer
+  1545                        *	bcc	.NoInc
+  1546                        *	inc	<Answer+3	;Inc high byte
+  1547 00:0BBE: 18           	clc			;Reset carry
+  1548 00:0BBF: 48           .NoInc	pha
+  1549 00:0BC0: 68           	pla
+  1550 00:0BC1: 6D 16 42     	adc	PRODC		;Get answer again
+  1551                        *	sta	<Answer+1	;Save result
+  1552                        *	bcc	.NoInc2
+  1553                        *	inc	<Answer+3
+  1554 00:0BC4: A2 00        .NoInc2	ldx	#0
+  1555 00:0BC6: C2 10        	LI	;***************
+  1556 00:0BC8: 28           	plp			;Restore MX and sign
+  1557 00:0BC9: 10 05        	bpl	.NoUnNeg
+  1558 00:0BCB: 49 FF FF     	eor	#-1		;Negate it
+  1559 00:0BCE: 1A           	inc	a		;Inc
+  1560 00:0BCF: CA           	dex
+  1561 00:0BD0: AB           .NoUnNeg	plb			;Restore data ba
+                    nk
+  1562                        
+  1563 00:0BD1: A8 A5 06 85  	EPILOGUE		;RTL!
+       00:0BD5: 0A A5 05 85 
+       00:0BD9: 09 2B 3B 18 
+       00:0BDD: 69 08 00 1B 
+       00:0BE1: 98 6B 
+  1564                        
+  1565                        
+  1566                        ;=================================================
+                    ===================
+  1567                        ; ufixed_t UFixedMul (ufixed_t Val1, ufixed_t Val2
+                    )
+  1568                        ; * Mul an unsigned fixed by an unsigned fixed *
+  1569                        ;
+  1570                        
+  1571                        	public	~~UFixedMul
+  1572                        
+  1573                        	LCLSTART
+  1574                        	LCLD	Answer
+  1575                        
+  1576                        	ARGSTART
+  1577                        	ARGW	Val1		;Value to convert
+  1578                        	ARGW	Val2		;Value to convert
+  1579                        
+  1580 00:0BE3: 3B 38 E9 04  ~~UFixedMul:	PROLOGUE
+       00:0BE7: 00 1B 0B 5B 
+  1581                        
+  1582 00:0BEB: 8B           	phb			;Save data bank
+  1583 00:0BEC: F4 00 00     	pea	$0000		;Set bank to hardware
+  1584 00:0BEF: AB           	plb
+  1585 00:0BF0: AB           	plb
+  Thu Oct  6 1994 15:05                                                Page 31
+
+
+  1586                        
+  1587                        ;---------------------------------------
+  1588                        ; Mul by Val1+0
+  1589                        ;---------------------------------------
+  1590                        
+  1591 00:0BF1: E2 10        	SI	;***************
+  1592 00:0BF3: A6 0A        	ldx	<Val2		;Zero?
+  1593 00:0BF5: 8E 02 42     	stx	MULTA		;Val1 * Val2
+  1594 00:0BF8: A4 08        	ldy	<Val1
+  1595 00:0BFA: 8C 03 42     	sty	MULTB		;Save the mul value
+  1596 00:0BFD: A6 0B        	ldx	<Val2+1		;Get High * High
+  1597 00:0BFF: A4 09        	ldy	<Val1+1
+  1598 00:0C01: 48           	pha
+  1599 00:0C02: 68           	pla
+  1600 00:0C03: AD 16 42     	lda	PRODC		;Get the answer
+  1601 00:0C06: 8E 02 42     	stx	MULTA		;Start the next mul
+  1602 00:0C09: 8C 03 42     	sty	MULTB		;Val1+1 * Val2+1
+  1603 00:0C0C: 85 01        	sta	<Answer		;Save low word of the an
+                    swer
+  1604                        
+  1605 00:0C0E: A6 08        	ldx	<Val1		;Low byte
+  1606 00:0C10: 18           	clc
+  1607 00:0C11: 48           	pha
+  1608 00:0C12: 68           	pla
+  1609 00:0C13: AD 16 42     	lda	PRODC		;Get the answer
+  1610 00:0C16: 8E 03 42     	stx	MULTB		;Val2+1 * Val1
+  1611 00:0C19: 85 03        	sta	<Answer+2	;Save as high word
+  1612                        
+  1613 00:0C1B: A6 0A        	ldx	<Val2
+  1614 00:0C1D: 48           	pha
+  1615 00:0C1E: 68           	pla
+  1616 00:0C1F: AD 16 42     	lda	PRODC
+  1617 00:0C22: 8E 02 42     	stx	MULTA
+  1618 00:0C25: 8C 03 42     	sty	MULTB		;Val2 * Val+1
+  1619 00:0C28: 48           	pha
+  1620 00:0C29: 68           	pla
+  1621 00:0C2A: 65 02        	adc	<Answer+1	;Add into answer
+  1622                        *	bcc	.NoInc
+  1623                        *	inc	<Answer+3	;Inc high byte
+  1624 00:0C2C: 18           	clc			;Reset carry
+  1625 00:0C2D: 48           .NoInc	pha
+  1626 00:0C2E: 68           	pla
+  1627 00:0C2F: 6D 16 42     	adc	PRODC		;Get answer again
+  1628                        *	sta	<Answer+1	;Save result
+  1629                        *	bcc	.NoInc2
+  1630                        *	inc	<Answer+3
+  1631                        .NoInc2	LONGI	ON	;*******
+  1632 00:0C32: C2 11        	rep	#$11
+  1633 00:0C34: AB           	plb			;Restore data bank
+  1634                        
+  1635 00:0C35: A2 00 00     	ldx	#0		;Clear high byte of answ
+                    er (X:A)
+  1636                        
+  1637 00:0C38: A8 A5 06 85  	EPILOGUE		;RTL!
+       00:0C3C: 0A A5 05 85 
+       00:0C40: 09 2B 3B 18 
+       00:0C44: 69 08 00 1B 
+       00:0C48: 98 6B 
+  Thu Oct  6 1994 15:05                                                Page 32
+
+
+  1638                        
+  1639                        ;-------------------------------------------------
+                    -------------------
+  1640                        
+  1641                        	end
+
+
+      Lines assembled: 3276
+      Errors: 0

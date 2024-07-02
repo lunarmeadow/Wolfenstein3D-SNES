@@ -1,0 +1,10 @@
+{
+    "files.associations": {
+        "SIGHT.C": "cpp",
+        "REFRESH.C": "cpp",
+        "WOLFMAIN.C": "cpp",
+        "SOUNDS.C": "cpp",
+        "INTRO.C": "cpp",
+        "SNESMAIN.C": "cpp"
+    }
+}

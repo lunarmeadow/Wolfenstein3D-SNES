@@ -909,13 +909,13 @@ void RunAutoMap (void)
 // Secret code entering
 //-------------------------
 
-		if ( (joystick1&JOYPAD_B) && !(oldjoystick1&JOYPAD_B) )
+		if ( (joystick1&JOYPAD_A) && !(oldjoystick1&JOYPAD_B) )
 			code = (code<<2) + 3;
-		if ( (joystick1&JOYPAD_A) && !(oldjoystick1&JOYPAD_A) )
+		if ( (joystick1&JOYPAD_B) && !(oldjoystick1&JOYPAD_A) )
 			code = (code<<2) + 2;
-		if ( (joystick1&JOYPAD_DN) && !(oldjoystick1&JOYPAD_DN) )
+		if ( (joystick1&JOYPAD_UP) && !(oldjoystick1&JOYPAD_DN) )
 			code = (code<<2) + 1;
-		if ( (joystick1&JOYPAD_TL) && !(oldjoystick1&JOYPAD_TL) )
+		if ( (joystick1&JOYPAD_TR) && !(oldjoystick1&JOYPAD_TL) )
 			code = (code<<2) + 0;
 		if ( joystick1& (JOYPAD_X|JOYPAD_DN|JOYPAD_LFT|JOYPAD_RGT|JOYPAD_SELECT|JOYPAD_TL) )
 			code = -1;
